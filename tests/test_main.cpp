@@ -48,7 +48,7 @@ void test_impulse_matches_kernel() {
 }
 
 void test_parallel_matches_scalar_across_shapes_and_workers() {
-  for (const auto [width, height] : std::array<std::pair<std::size_t, std::size_t>, 5>{{
+  for (const auto& [width, height] : std::array<std::pair<std::size_t, std::size_t>, 5>{{
            {1, 1}, {2, 7}, {7, 2}, {17, 19}, {64, 33},
        }}) {
     GrayImage input(width, height);
