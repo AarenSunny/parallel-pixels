@@ -5,7 +5,7 @@ iteration count:
 
 ```bash
 make
-./build/parallel-pixels benchmark --width 2048 --height 2048 --threads 8 --iterations 9 --json
+./build/parallel-pixels benchmark --width 2048 --height 2048 --threads 8 --iterations 9 --kernel gaussian --json
 ```
 
 The tool creates the same deterministic grayscale input on every run, computes
@@ -19,7 +19,7 @@ timing outlier and makes unstable runs visible, but it is not a confidence
 interval and does not make results portable across machines.
 
 Always record CPU model, operating system, compiler, optimization flags, image
-dimensions, requested thread count, and iteration count beside a result. A
+dimensions, kernel, requested thread count, and iteration count beside a result. A
 speedup from one machine is not a general throughput promise. The implementation
 creates threads per invocation, so it intentionally exposes startup overhead
 and may lose on small inputs.

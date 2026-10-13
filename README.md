@@ -4,8 +4,8 @@
 
 Parallel Pixels is a dependency-free C++20 image-processing lab built to make
 parallel-software decisions measurable. It reads binary grayscale PGM images,
-runs an exact integer 3×3 Gaussian blur through either a scalar reference or a
-row-partitioned multithreaded implementation, and verifies byte-for-byte
+runs exact integer 3×3 Gaussian or box blur through either a scalar reference
+or a row-partitioned multithreaded implementation, and verifies byte-for-byte
 equivalence before reporting speedup.
 
 This is deliberately a software project. It demonstrates algorithms, memory
@@ -22,7 +22,7 @@ make benchmark-smoke
 make crossover-smoke
 ```
 
-The seven test groups cover the fixed-point kernel, border behavior, constant
+The eight test groups cover both fixed-point kernels, border behavior, constant
 images, exact parallel/scalar equality across shapes and thread counts, PGM
 round trips, effective worker limits, benchmark statistics, and invalid input
 handling. The smoke targets verify both a single benchmark and the crossover
@@ -32,7 +32,7 @@ sweep.
 
 ```bash
 make
-./build/parallel-pixels blur input.pgm output.pgm --threads 8
+./build/parallel-pixels blur input.pgm output.pgm --threads 8 --kernel box
 ```
 
 Only binary P5 PGM input with an 8-bit maximum value is accepted. Dimensions,
@@ -41,7 +41,7 @@ raster length, and output failures are validated rather than silently repaired.
 ## Measure parallel speedup
 
 ```bash
-./build/parallel-pixels benchmark --width 2048 --height 2048 --threads 8 --iterations 9 --json
+./build/parallel-pixels benchmark --width 2048 --height 2048 --threads 8 --iterations 9 --kernel gaussian --json
 ```
 
 The benchmark uses deterministic input, alternates scalar/parallel timing order,
@@ -71,13 +71,13 @@ data flow, and limitations.
 - CPU shared-memory threads only; no CUDA or GPU claim
 - New threads per blur call rather than a reusable pool
 - Grayscale PGM only; no production image-codec dependency
-- One fixed kernel; no SIMD or cache tiling yet
+- Two fixed 3×3 kernels; no arbitrary kernels, SIMD, or cache tiling yet
 - Local benchmark, not a cross-machine performance guarantee
 
 ## Roadmap
 
 - Reusable worker pool and tiled scheduling experiment
-- Additional exact kernels and workload-size crossover analysis
+- Additional exact kernels beyond the current Gaussian and box pair
 - Compiler-vectorization report and optional explicit SIMD path
 - Optional CUDA implementation only with a reproducible GPU test environment
 

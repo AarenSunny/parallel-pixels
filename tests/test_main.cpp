@@ -36,7 +36,9 @@ void expect_throws(Function&& function, const std::string& message) {
 
 void test_constant_image_stays_constant() {
   GrayImage input(11, 7, std::vector<std::uint8_t>(77, 93));
-  expect(parallel_pixels::gaussian_blur_scalar(input) == input, "constant image changed after blur");
+  for (const auto kernel : {parallel_pixels::BlurKernel::gaussian, parallel_pixels::BlurKernel::box}) {
+    expect(parallel_pixels::blur_scalar(input, kernel) == input, "constant image changed after blur");
+  }
 }
 
 void test_impulse_matches_kernel() {
@@ -48,6 +50,15 @@ void test_impulse_matches_kernel() {
          "impulse response did not match the fixed-point Gaussian kernel");
 }
 
+void test_box_impulse_matches_kernel() {
+  GrayImage input(3, 3);
+  input.at(1, 1) = 180;
+  const auto output = parallel_pixels::blur_scalar(input, parallel_pixels::BlurKernel::box);
+  expect(std::all_of(output.pixels().begin(), output.pixels().end(),
+                     [](std::uint8_t pixel) { return pixel == 20; }),
+         "impulse response did not match the fixed-point box kernel");
+}
+
 void test_parallel_matches_scalar_across_shapes_and_workers() {
   for (const auto& [width, height] : std::array<std::pair<std::size_t, std::size_t>, 5>{{
            {1, 1}, {2, 7}, {7, 2}, {17, 19}, {64, 33},
@@ -56,10 +67,12 @@ void test_parallel_matches_scalar_across_shapes_and_workers() {
     for (std::size_t index = 0; index < input.pixels().size(); ++index) {
       input.pixels()[index] = static_cast<std::uint8_t>((index * 37U + width * 11U + height) % 256U);
     }
-    const auto expected = parallel_pixels::gaussian_blur_scalar(input);
-    for (const auto workers : {1U, 2U, 3U, 16U}) {
-      expect(parallel_pixels::gaussian_blur_parallel(input, workers) == expected,
-             "parallel output differed from scalar output");
+    for (const auto kernel : {parallel_pixels::BlurKernel::gaussian, parallel_pixels::BlurKernel::box}) {
+      const auto expected = parallel_pixels::blur_scalar(input, kernel);
+      for (const auto workers : {1U, 2U, 3U, 16U}) {
+        expect(parallel_pixels::blur_parallel(input, kernel, workers) == expected,
+               "parallel output differed from scalar output");
+      }
     }
   }
 }
@@ -118,6 +131,7 @@ int main() {
   const std::vector<std::pair<std::string, std::function<void()>>> tests{
       {"constant image stays constant", test_constant_image_stays_constant},
       {"impulse response matches kernel", test_impulse_matches_kernel},
+      {"box impulse response matches kernel", test_box_impulse_matches_kernel},
       {"parallel output matches scalar output", test_parallel_matches_scalar_across_shapes_and_workers},
       {"effective worker count respects image height", test_effective_worker_count_respects_image_height},
       {"benchmark statistics are robust", test_benchmark_statistics},

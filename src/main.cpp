@@ -25,8 +25,19 @@ struct BenchmarkOptions {
   std::size_t height = 2048;
   std::size_t workers = parallel_pixels::default_worker_count();
   std::size_t iterations = 7;
+  parallel_pixels::BlurKernel kernel = parallel_pixels::BlurKernel::gaussian;
   bool json = false;
 };
+
+parallel_pixels::BlurKernel parse_kernel(std::string_view value) {
+  if (value == "gaussian") return parallel_pixels::BlurKernel::gaussian;
+  if (value == "box") return parallel_pixels::BlurKernel::box;
+  throw std::invalid_argument("kernel must be 'gaussian' or 'box'");
+}
+
+std::string_view kernel_name(parallel_pixels::BlurKernel kernel) {
+  return kernel == parallel_pixels::BlurKernel::gaussian ? "gaussian" : "box";
+}
 
 std::size_t parse_positive(std::string_view value, std::string_view option) {
   std::size_t consumed = 0;
@@ -55,6 +66,7 @@ BenchmarkOptions benchmark_options(int argc, char** argv) {
     else if (argument == "--height") options.height = parse_positive(option_value(index, argc, argv), argument);
     else if (argument == "--threads") options.workers = parse_positive(option_value(index, argc, argv), argument);
     else if (argument == "--iterations") options.iterations = parse_positive(option_value(index, argc, argv), argument);
+    else if (argument == "--kernel") options.kernel = parse_kernel(option_value(index, argc, argv));
     else if (argument == "--json") options.json = true;
     else throw std::invalid_argument("unknown benchmark option: " + std::string(argument));
   }
@@ -97,8 +109,8 @@ int run_benchmark(int argc, char** argv) {
   const auto options = benchmark_options(argc, argv);
   const auto input = synthetic_image(options.width, options.height);
   const auto active_workers = parallel_pixels::effective_worker_count(input, options.workers);
-  const auto scalar_reference = parallel_pixels::gaussian_blur_scalar(input);
-  const auto parallel_reference = parallel_pixels::gaussian_blur_parallel(input, options.workers);
+  const auto scalar_reference = parallel_pixels::blur_scalar(input, options.kernel);
+  const auto parallel_reference = parallel_pixels::blur_parallel(input, options.kernel, options.workers);
   if (scalar_reference != parallel_reference) throw std::runtime_error("parallel result differs from scalar reference");
 
   std::vector<double> scalar_samples;
@@ -108,14 +120,14 @@ int run_benchmark(int argc, char** argv) {
   for (std::size_t iteration = 0; iteration < options.iterations; ++iteration) {
     auto measure_scalar = [&] {
       const auto begin = Clock::now();
-      const auto result = parallel_pixels::gaussian_blur_scalar(input);
+      const auto result = parallel_pixels::blur_scalar(input, options.kernel);
       const auto end = Clock::now();
       if (result != scalar_reference) throw std::runtime_error("scalar result changed between iterations");
       scalar_samples.push_back(elapsed_ms(begin, end));
     };
     auto measure_parallel = [&] {
       const auto begin = Clock::now();
-      const auto result = parallel_pixels::gaussian_blur_parallel(input, options.workers);
+      const auto result = parallel_pixels::blur_parallel(input, options.kernel, options.workers);
       const auto end = Clock::now();
       if (result != scalar_reference) throw std::runtime_error("parallel result differs from scalar reference");
       parallel_samples.push_back(elapsed_ms(begin, end));
@@ -139,6 +151,7 @@ int run_benchmark(int argc, char** argv) {
               << "{\n"
               << "  \"width\": " << options.width << ",\n"
               << "  \"height\": " << options.height << ",\n"
+              << "  \"kernel\": \"" << kernel_name(options.kernel) << "\",\n"
               << "  \"threads\": " << options.workers << ",\n"
               << "  \"activeThreads\": " << active_workers << ",\n"
               << "  \"iterations\": " << options.iterations << ",\n"
@@ -155,6 +168,7 @@ int run_benchmark(int argc, char** argv) {
     std::cout << std::fixed << std::setprecision(3)
               << "Parallel Pixels benchmark\n"
               << "Image: " << options.width << 'x' << options.height << "\n"
+              << "Kernel: " << kernel_name(options.kernel) << "\n"
               << "Requested threads: " << options.workers << "\n"
               << "Active threads: " << active_workers << "\n"
               << "Iterations: " << options.iterations << "\n"
@@ -171,9 +185,11 @@ int run_benchmark(int argc, char** argv) {
 int run_blur(int argc, char** argv) {
   if (argc < 4) throw std::invalid_argument("blur requires an input and output PGM path");
   std::size_t workers = parallel_pixels::default_worker_count();
+  auto kernel = parallel_pixels::BlurKernel::gaussian;
   for (int index = 4; index < argc; ++index) {
     const std::string_view argument(argv[index]);
     if (argument == "--threads") workers = parse_positive(option_value(index, argc, argv), argument);
+    else if (argument == "--kernel") kernel = parse_kernel(option_value(index, argc, argv));
     else throw std::invalid_argument("unknown blur option: " + std::string(argument));
   }
   if (workers > parallel_pixels::kMaximumWorkerCount) {
@@ -181,17 +197,19 @@ int run_blur(int argc, char** argv) {
   }
   const auto input = parallel_pixels::read_pgm(argv[2]);
   const auto active_workers = parallel_pixels::effective_worker_count(input, workers);
-  const auto output = parallel_pixels::gaussian_blur_parallel(input, workers);
+  const auto output = parallel_pixels::blur_parallel(input, kernel, workers);
   parallel_pixels::write_pgm(argv[3], output);
   std::cout << "Wrote " << output.width() << 'x' << output.height() << " image using "
-            << active_workers << " active threads (" << workers << " requested)\n";
+            << active_workers << " active threads (" << workers << " requested, "
+            << kernel_name(kernel) << " kernel)\n";
   return EXIT_SUCCESS;
 }
 
 void usage(std::ostream& output) {
   output << "Usage:\n"
-         << "  parallel-pixels blur <input.pgm> <output.pgm> [--threads N]\n"
-         << "  parallel-pixels benchmark [--width N] [--height N] [--threads N] [--iterations N] [--json]\n";
+         << "  parallel-pixels blur <input.pgm> <output.pgm> [--threads N] [--kernel gaussian|box]\n"
+         << "  parallel-pixels benchmark [--width N] [--height N] [--threads N] [--iterations N] "
+            "[--kernel gaussian|box] [--json]\n";
 }
 
 }  // namespace

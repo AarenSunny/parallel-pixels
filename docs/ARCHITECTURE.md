@@ -15,9 +15,9 @@ flowchart LR
 ```
 
 `GrayImage` owns one contiguous row-major byte buffer and validates positive,
-non-overflowing dimensions. Both implementations apply the same integer 3×3
-Gaussian kernel with clamped borders, so equality is byte-for-byte rather than
-an image-quality tolerance.
+non-overflowing dimensions. Both implementations apply the selected integer
+3×3 Gaussian or box kernel with clamped borders, so equality is byte-for-byte
+rather than an image-quality tolerance.
 
 The parallel path rejects requests above a 256-thread safety cap, limits active
 workers to image height, divides rows as evenly as possible, and gives each
@@ -31,7 +31,7 @@ the worker group before the output can be moved into the return value.
 - **Role signal:** modern C++, memory layout, algorithms, thread partitioning,
   benchmarking, and correctness target NVIDIA software roles without claiming
   electrical or accelerator experience.
-- **Smallest credible scope:** one real file format and one exact kernel expose
+- **Smallest credible scope:** one real file format and two exact kernels expose
   I/O validation, boundaries, parallel work decomposition, and measurement.
 - **Reference before optimization:** the scalar function is the correctness
   oracle and is timed independently from the multithreaded path.
@@ -41,7 +41,8 @@ the worker group before the output can be moved into the return value.
 ## Boundaries
 
 This is shared-memory CPU parallelism. Thread startup occurs for every call, so
-small images can be slower than scalar execution. It does not use SIMD,
-thread-pool reuse, tiled caches, color formats, JPEG/PNG codecs, GPUs, or CUDA.
-Those are possible experiments only after preserving the scalar equivalence
-tests and recording hardware-specific measurements.
+small images can be slower than scalar execution. It supports only fixed 3×3
+Gaussian and box kernels and does not use SIMD, thread-pool reuse, tiled caches,
+color formats, JPEG/PNG codecs, GPUs, or CUDA. Those are possible experiments
+only after preserving the scalar equivalence tests and recording
+hardware-specific measurements.
