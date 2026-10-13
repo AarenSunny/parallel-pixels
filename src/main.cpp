@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -14,6 +13,7 @@
 #include "parallel_pixels/blur.hpp"
 #include "parallel_pixels/image.hpp"
 #include "parallel_pixels/pgm.hpp"
+#include "parallel_pixels/statistics.hpp"
 
 namespace {
 
@@ -84,12 +84,6 @@ double elapsed_ms(Clock::time_point begin, Clock::time_point end) {
   return std::chrono::duration<double, std::milli>(end - begin).count();
 }
 
-double median(std::vector<double> samples) {
-  std::sort(samples.begin(), samples.end());
-  const auto middle = samples.size() / 2;
-  return samples.size() % 2 == 0 ? (samples[middle - 1] + samples[middle]) / 2.0 : samples[middle];
-}
-
 std::uint64_t checksum(const GrayImage& image) {
   std::uint64_t hash = 1469598103934665603ULL;
   for (const auto pixel : image.pixels()) {
@@ -135,8 +129,10 @@ int run_benchmark(int argc, char** argv) {
     }
   }
 
-  const auto scalar_median = median(scalar_samples);
-  const auto parallel_median = median(parallel_samples);
+  const auto scalar_median = parallel_pixels::median(scalar_samples);
+  const auto parallel_median = parallel_pixels::median(parallel_samples);
+  const auto scalar_mad = parallel_pixels::median_absolute_deviation(scalar_samples);
+  const auto parallel_mad = parallel_pixels::median_absolute_deviation(parallel_samples);
   const auto speedup = scalar_median / parallel_median;
   if (options.json) {
     std::cout << std::fixed << std::setprecision(3)
@@ -147,7 +143,9 @@ int run_benchmark(int argc, char** argv) {
               << "  \"activeThreads\": " << active_workers << ",\n"
               << "  \"iterations\": " << options.iterations << ",\n"
               << "  \"scalarMedianMs\": " << scalar_median << ",\n"
+              << "  \"scalarMadMs\": " << scalar_mad << ",\n"
               << "  \"parallelMedianMs\": " << parallel_median << ",\n"
+              << "  \"parallelMadMs\": " << parallel_mad << ",\n"
               << "  \"speedup\": " << speedup << ",\n"
               << "  \"exactMatch\": true,\n"
               << "  \"outputChecksum\": \"" << std::hex << checksum(scalar_reference) << std::dec << "\",\n"
@@ -161,7 +159,9 @@ int run_benchmark(int argc, char** argv) {
               << "Active threads: " << active_workers << "\n"
               << "Iterations: " << options.iterations << "\n"
               << "Scalar median: " << scalar_median << " ms\n"
+              << "Scalar MAD: " << scalar_mad << " ms\n"
               << "Parallel median: " << parallel_median << " ms\n"
+              << "Parallel MAD: " << parallel_mad << " ms\n"
               << "Speedup: " << speedup << "x\n"
               << "Exact match: yes\n";
   }

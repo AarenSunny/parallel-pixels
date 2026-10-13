@@ -14,6 +14,7 @@
 #include "parallel_pixels/blur.hpp"
 #include "parallel_pixels/image.hpp"
 #include "parallel_pixels/pgm.hpp"
+#include "parallel_pixels/statistics.hpp"
 
 namespace {
 
@@ -71,6 +72,16 @@ void test_effective_worker_count_respects_image_height() {
          "worker count was not capped by image height");
 }
 
+void test_benchmark_statistics() {
+  expect(parallel_pixels::median({9.0, 1.0, 5.0}) == 5.0, "odd-sample median was incorrect");
+  expect(parallel_pixels::median({1.0, 2.0, 9.0, 10.0}) == 5.5,
+         "even-sample median was incorrect");
+  expect(parallel_pixels::median_absolute_deviation({1.0, 2.0, 2.0, 4.0, 6.0}) == 1.0,
+         "median absolute deviation was incorrect");
+  expect_throws([] { static_cast<void>(parallel_pixels::median({})); },
+                "empty timing sample set was accepted");
+}
+
 void test_pgm_round_trip() {
   const auto path = std::filesystem::temp_directory_path() / "parallel-pixels-round-trip.pgm";
   GrayImage image(4, 2, {0, 9, 10, 32, 127, 128, 254, 255});
@@ -109,6 +120,7 @@ int main() {
       {"impulse response matches kernel", test_impulse_matches_kernel},
       {"parallel output matches scalar output", test_parallel_matches_scalar_across_shapes_and_workers},
       {"effective worker count respects image height", test_effective_worker_count_respects_image_height},
+      {"benchmark statistics are robust", test_benchmark_statistics},
       {"PGM round trip preserves bytes", test_pgm_round_trip},
       {"invalid inputs are rejected", test_invalid_inputs_are_rejected},
   };

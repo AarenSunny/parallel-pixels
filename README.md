@@ -22,10 +22,11 @@ make benchmark-smoke
 make crossover-smoke
 ```
 
-The six test groups cover the fixed-point kernel, border behavior, constant
+The seven test groups cover the fixed-point kernel, border behavior, constant
 images, exact parallel/scalar equality across shapes and thread counts, PGM
-round trips, effective worker limits, and invalid input handling. The smoke
-targets verify both a single benchmark and the crossover sweep.
+round trips, effective worker limits, benchmark statistics, and invalid input
+handling. The smoke targets verify both a single benchmark and the crossover
+sweep.
 
 ## Process an image
 
@@ -44,8 +45,9 @@ raster length, and output failures are validated rather than silently repaired.
 ```
 
 The benchmark uses deterministic input, alternates scalar/parallel timing order,
-reports medians, validates exact equality, and includes a stable checksum. Read
-the [benchmark method](docs/BENCHMARKING.md) before quoting a result.
+reports medians and median absolute deviations, validates exact equality, and
+includes a stable checksum. Read the [benchmark method](docs/BENCHMARKING.md)
+before quoting a result.
 
 To compare workload sizes and thread counts with the same benchmark method:
 

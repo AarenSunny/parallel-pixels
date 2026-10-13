@@ -4,7 +4,7 @@ CXXFLAGS ?= -std=c++20 -O3 -Wall -Wextra -Wpedantic -Werror -pthread
 LDFLAGS ?= -pthread
 
 BUILD_DIR := build
-LIB_OBJECTS := $(BUILD_DIR)/blur.o $(BUILD_DIR)/pgm.o
+LIB_OBJECTS := $(BUILD_DIR)/blur.o $(BUILD_DIR)/pgm.o $(BUILD_DIR)/statistics.o
 APP_OBJECTS := $(LIB_OBJECTS) $(BUILD_DIR)/main.o
 TEST_OBJECTS := $(LIB_OBJECTS) $(BUILD_DIR)/test_main.o
 DEPENDENCIES := $(APP_OBJECTS:.o=.d) $(BUILD_DIR)/test_main.d
@@ -32,6 +32,9 @@ $(BUILD_DIR)/blur.o: src/blur.cpp | $(BUILD_DIR)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c $< -o $@
 
 $(BUILD_DIR)/pgm.o: src/pgm.cpp | $(BUILD_DIR)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c $< -o $@
+
+$(BUILD_DIR)/statistics.o: src/statistics.cpp | $(BUILD_DIR)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c $< -o $@
 
 $(BUILD_DIR)/main.o: src/main.cpp | $(BUILD_DIR)

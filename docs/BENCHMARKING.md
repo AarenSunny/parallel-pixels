@@ -11,8 +11,12 @@ make
 The tool creates the same deterministic grayscale input on every run, computes
 an untimed scalar and parallel result first, and refuses to benchmark if they
 differ. Timed scalar and parallel calls alternate order. The report uses the
-median rather than the fastest sample and includes an exact-match flag and
-output checksum.
+median rather than the fastest sample, reports median absolute deviation (MAD)
+for timing variability, and includes an exact-match flag and output checksum.
+
+MAD is the median distance from the sample median. It is resistant to a single
+timing outlier and makes unstable runs visible, but it is not a confidence
+interval and does not make results portable across machines.
 
 Always record CPU model, operating system, compiler, optimization flags, image
 dimensions, requested thread count, and iteration count beside a result. A
