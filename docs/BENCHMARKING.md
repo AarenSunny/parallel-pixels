@@ -26,6 +26,29 @@ height so that every worker receives at least one row. This is an implementation
 count, not a measurement of simultaneous CPU utilization or operating-system
 scheduling.
 
+## Workload crossover sweep
+
+Run the bounded default matrix and capture newline-delimited JSON:
+
+```bash
+./tools/crossover_sweep.sh > crossover.ndjson
+```
+
+The sweep delegates every measurement to the same benchmark command rather
+than implementing a second timer. Its defaults cover square images of 128,
+512, and 2048 pixels with one, two, four, and eight requested threads. Override
+the matrix without editing the script when a machine has different limits:
+
+```bash
+SIZES="64 256 1024" THREADS="1 4" ITERATIONS=9 ./tools/crossover_sweep.sh
+```
+
+Each line remains valid JSON and includes dimensions, requested and active
+threads, exact-match evidence, and a checksum. Runs are sequential, so the
+output supports crossover analysis but does not isolate thermal throttling,
+background load, or CPU-frequency changes. Record the environment and repeat
+the full sweep before making a performance claim.
+
 ## Verified development run — 2026-10-04
 
 Environment: Apple M4 (10 physical/logical cores), arm64, macOS 27.0, Apple

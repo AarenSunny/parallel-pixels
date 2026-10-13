@@ -19,11 +19,13 @@ Requirements: a C++20 compiler, POSIX threads, and Make.
 ```bash
 make test
 make benchmark-smoke
+make crossover-smoke
 ```
 
-The five test groups cover the fixed-point kernel, border behavior, constant
+The six test groups cover the fixed-point kernel, border behavior, constant
 images, exact parallel/scalar equality across shapes and thread counts, PGM
-round trips, and invalid input handling.
+round trips, effective worker limits, and invalid input handling. The smoke
+targets verify both a single benchmark and the crossover sweep.
 
 ## Process an image
 
@@ -44,6 +46,15 @@ raster length, and output failures are validated rather than silently repaired.
 The benchmark uses deterministic input, alternates scalar/parallel timing order,
 reports medians, validates exact equality, and includes a stable checksum. Read
 the [benchmark method](docs/BENCHMARKING.md) before quoting a result.
+
+To compare workload sizes and thread counts with the same benchmark method:
+
+```bash
+./tools/crossover_sweep.sh > crossover.ndjson
+```
+
+The sweep emits one self-contained JSON object per configuration, which keeps
+partial results usable if a long experiment is interrupted.
 
 ## Architecture
 
