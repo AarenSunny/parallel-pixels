@@ -63,6 +63,14 @@ void test_parallel_matches_scalar_across_shapes_and_workers() {
   }
 }
 
+void test_effective_worker_count_respects_image_height() {
+  const GrayImage short_image(32, 3);
+  expect(parallel_pixels::effective_worker_count(short_image, 2) == 2,
+         "worker count changed when enough rows were available");
+  expect(parallel_pixels::effective_worker_count(short_image, 16) == 3,
+         "worker count was not capped by image height");
+}
+
 void test_pgm_round_trip() {
   const auto path = std::filesystem::temp_directory_path() / "parallel-pixels-round-trip.pgm";
   GrayImage image(4, 2, {0, 9, 10, 32, 127, 128, 254, 255});
@@ -100,6 +108,7 @@ int main() {
       {"constant image stays constant", test_constant_image_stays_constant},
       {"impulse response matches kernel", test_impulse_matches_kernel},
       {"parallel output matches scalar output", test_parallel_matches_scalar_across_shapes_and_workers},
+      {"effective worker count respects image height", test_effective_worker_count_respects_image_height},
       {"PGM round trip preserves bytes", test_pgm_round_trip},
       {"invalid inputs are rejected", test_invalid_inputs_are_rejected},
   };

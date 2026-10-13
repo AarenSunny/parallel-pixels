@@ -51,11 +51,17 @@ GrayImage gaussian_blur_scalar(const GrayImage& input) {
   return output;
 }
 
+std::size_t effective_worker_count(const GrayImage& input, std::size_t requested_worker_count) {
+  if (requested_worker_count == 0) throw std::invalid_argument("worker count must be positive");
+  if (requested_worker_count > kMaximumWorkerCount) {
+    throw std::invalid_argument("worker count exceeds the safety cap");
+  }
+  return std::min(requested_worker_count, input.height());
+}
+
 GrayImage gaussian_blur_parallel(const GrayImage& input, std::size_t worker_count) {
-  if (worker_count == 0) throw std::invalid_argument("worker count must be positive");
-  if (worker_count > kMaximumWorkerCount) throw std::invalid_argument("worker count exceeds the safety cap");
   GrayImage output(input.width(), input.height());
-  const auto active_workers = std::min(worker_count, input.height());
+  const auto active_workers = effective_worker_count(input, worker_count);
   const auto base_rows = input.height() / active_workers;
   const auto extra_rows = input.height() % active_workers;
   std::vector<std::jthread> workers;

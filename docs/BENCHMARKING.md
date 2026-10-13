@@ -20,6 +20,12 @@ speedup from one machine is not a general throughput promise. The implementation
 creates threads per invocation, so it intentionally exposes startup overhead
 and may lose on small inputs.
 
+The JSON `threads` field records the requested count, while `activeThreads`
+records the number actually launched. Active threads are capped at the image
+height so that every worker receives at least one row. This is an implementation
+count, not a measurement of simultaneous CPU utilization or operating-system
+scheduling.
+
 ## Verified development run — 2026-10-04
 
 Environment: Apple M4 (10 physical/logical cores), arm64, macOS 27.0, Apple

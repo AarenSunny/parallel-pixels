@@ -102,6 +102,7 @@ std::uint64_t checksum(const GrayImage& image) {
 int run_benchmark(int argc, char** argv) {
   const auto options = benchmark_options(argc, argv);
   const auto input = synthetic_image(options.width, options.height);
+  const auto active_workers = parallel_pixels::effective_worker_count(input, options.workers);
   const auto scalar_reference = parallel_pixels::gaussian_blur_scalar(input);
   const auto parallel_reference = parallel_pixels::gaussian_blur_parallel(input, options.workers);
   if (scalar_reference != parallel_reference) throw std::runtime_error("parallel result differs from scalar reference");
@@ -143,6 +144,7 @@ int run_benchmark(int argc, char** argv) {
               << "  \"width\": " << options.width << ",\n"
               << "  \"height\": " << options.height << ",\n"
               << "  \"threads\": " << options.workers << ",\n"
+              << "  \"activeThreads\": " << active_workers << ",\n"
               << "  \"iterations\": " << options.iterations << ",\n"
               << "  \"scalarMedianMs\": " << scalar_median << ",\n"
               << "  \"parallelMedianMs\": " << parallel_median << ",\n"
@@ -155,7 +157,8 @@ int run_benchmark(int argc, char** argv) {
     std::cout << std::fixed << std::setprecision(3)
               << "Parallel Pixels benchmark\n"
               << "Image: " << options.width << 'x' << options.height << "\n"
-              << "Threads: " << options.workers << "\n"
+              << "Requested threads: " << options.workers << "\n"
+              << "Active threads: " << active_workers << "\n"
               << "Iterations: " << options.iterations << "\n"
               << "Scalar median: " << scalar_median << " ms\n"
               << "Parallel median: " << parallel_median << " ms\n"
@@ -177,10 +180,11 @@ int run_blur(int argc, char** argv) {
     throw std::invalid_argument("thread count is capped at 256");
   }
   const auto input = parallel_pixels::read_pgm(argv[2]);
+  const auto active_workers = parallel_pixels::effective_worker_count(input, workers);
   const auto output = parallel_pixels::gaussian_blur_parallel(input, workers);
   parallel_pixels::write_pgm(argv[3], output);
-  std::cout << "Wrote " << output.width() << 'x' << output.height() << " image using " << workers
-            << " requested threads\n";
+  std::cout << "Wrote " << output.width() << 'x' << output.height() << " image using "
+            << active_workers << " active threads (" << workers << " requested)\n";
   return EXIT_SUCCESS;
 }
 
