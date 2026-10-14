@@ -49,14 +49,16 @@ reports medians and median absolute deviations, validates exact equality, and
 includes a stable checksum. Read the [benchmark method](docs/BENCHMARKING.md)
 before quoting a result.
 
-To compare workload sizes and thread counts with the same benchmark method:
+To compare both kernels across workload sizes and thread counts with the same
+benchmark method:
 
 ```bash
 ./tools/crossover_sweep.sh > crossover.ndjson
 ```
 
-The sweep emits one self-contained JSON object per configuration, which keeps
-partial results usable if a long experiment is interrupted.
+The sweep emits one self-contained JSON object per kernel, size, and thread
+configuration, which keeps partial results usable if a long experiment is
+interrupted.
 
 ## Architecture
 

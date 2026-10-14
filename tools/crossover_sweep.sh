@@ -5,6 +5,7 @@ set -euo pipefail
 binary=${BINARY:-./build/parallel-pixels}
 sizes=${SIZES:-"128 512 2048"}
 worker_counts=${THREADS:-"1 2 4 8"}
+kernels=${KERNELS:-"gaussian box"}
 iterations=${ITERATIONS:-7}
 
 if [[ ! -x "$binary" ]]; then
@@ -12,17 +13,20 @@ if [[ ! -x "$binary" ]]; then
   exit 1
 fi
 
-for size in $sizes; do
-  for workers in $worker_counts; do
-    result=$(
-      "$binary" benchmark \
-        --width "$size" \
-        --height "$size" \
-        --threads "$workers" \
-        --iterations "$iterations" \
-        --json
-    )
-    printf '%s' "$result" | tr -d '\n'
-    printf '\n'
+for kernel in $kernels; do
+  for size in $sizes; do
+    for workers in $worker_counts; do
+      result=$(
+        "$binary" benchmark \
+          --width "$size" \
+          --height "$size" \
+          --threads "$workers" \
+          --iterations "$iterations" \
+          --kernel "$kernel" \
+          --json
+      )
+      printf '%s' "$result" | tr -d '\n'
+      printf '\n'
+    done
   done
 done
