@@ -85,6 +85,22 @@ void test_effective_worker_count_respects_image_height() {
          "worker count was not capped by image height");
 }
 
+void test_worker_pool_reuses_threads_across_calls() {
+  parallel_pixels::BlurWorkerPool pool(4);
+  expect(pool.worker_count() == 4, "worker pool size changed after construction");
+  for (const auto& [width, height] : std::array<std::pair<std::size_t, std::size_t>, 3>{
+           {{1, 1}, {7, 2}, {17, 19}}}) {
+    GrayImage input(width, height);
+    for (std::size_t index = 0; index < input.pixels().size(); ++index) {
+      input.pixels()[index] = static_cast<std::uint8_t>((index * 29U + width + height * 7U) % 256U);
+    }
+    for (const auto kernel : {parallel_pixels::BlurKernel::gaussian, parallel_pixels::BlurKernel::box}) {
+      expect(pool.blur(input, kernel) == parallel_pixels::blur_scalar(input, kernel),
+             "worker pool output differed from scalar output");
+    }
+  }
+}
+
 void test_benchmark_statistics() {
   expect(parallel_pixels::median({9.0, 1.0, 5.0}) == 5.0, "odd-sample median was incorrect");
   expect(parallel_pixels::median({1.0, 2.0, 9.0, 10.0}) == 5.5,
@@ -114,6 +130,8 @@ void test_invalid_inputs_are_rejected() {
     static_cast<void>(parallel_pixels::gaussian_blur_parallel(
         image, parallel_pixels::kMaximumWorkerCount + 1));
   }, "unsafe worker count was accepted");
+  expect_throws([] { static_cast<void>(parallel_pixels::BlurWorkerPool(0)); },
+                "zero-sized worker pool was accepted");
 
   const auto path = std::filesystem::temp_directory_path() / "parallel-pixels-invalid.pgm";
   {
@@ -134,6 +152,7 @@ int main() {
       {"box impulse response matches kernel", test_box_impulse_matches_kernel},
       {"parallel output matches scalar output", test_parallel_matches_scalar_across_shapes_and_workers},
       {"effective worker count respects image height", test_effective_worker_count_respects_image_height},
+      {"worker pool reuses threads across calls", test_worker_pool_reuses_threads_across_calls},
       {"benchmark statistics are robust", test_benchmark_statistics},
       {"PGM round trip preserves bytes", test_pgm_round_trip},
       {"invalid inputs are rejected", test_invalid_inputs_are_rejected},

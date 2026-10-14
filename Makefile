@@ -18,6 +18,7 @@ test: $(BUILD_DIR)/parallel-pixels-tests
 
 benchmark-smoke: $(BUILD_DIR)/parallel-pixels
 	./$(BUILD_DIR)/parallel-pixels benchmark --width 128 --height 128 --threads 4 --iterations 3 --json
+	./$(BUILD_DIR)/parallel-pixels benchmark --width 128 --height 128 --threads 4 --iterations 3 --reuse-workers --json
 
 crossover-smoke: $(BUILD_DIR)/parallel-pixels
 	KERNELS="gaussian box" SIZES="16" THREADS="1 2" ITERATIONS=1 ./tools/crossover_sweep.sh

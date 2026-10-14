@@ -23,7 +23,7 @@ make crossover-smoke
 make vectorization-report
 ```
 
-The eight test groups cover both fixed-point kernels, border behavior, constant
+The nine test groups cover both fixed-point kernels, border behavior, constant
 images, exact parallel/scalar equality across shapes and thread counts, PGM
 round trips, effective worker limits, benchmark statistics, and invalid input
 handling. The smoke targets verify both a single benchmark and the crossover
@@ -50,6 +50,10 @@ reports medians and median absolute deviations, validates exact equality, and
 includes a stable checksum. Read the [benchmark method](docs/BENCHMARKING.md)
 before quoting a result.
 
+Add `--reuse-workers` to measure repeated calls through a fixed worker pool;
+the default remains thread creation per invocation so the original startup-cost
+experiment is preserved.
+
 To compare both kernels across workload sizes and thread counts with the same
 benchmark method:
 
@@ -73,14 +77,14 @@ records the current compiler evidence before any SIMD experiment.
 ## Current boundaries
 
 - CPU shared-memory threads only; no CUDA or GPU claim
-- New threads per blur call rather than a reusable pool
+- Reusable pool is benchmark-only and accepts one blur call at a time
 - Grayscale PGM only; no production image-codec dependency
 - Two fixed 3×3 kernels; no arbitrary kernels, explicit SIMD, or cache tiling yet
 - Local benchmark, not a cross-machine performance guarantee
 
 ## Roadmap
 
-- Reusable worker pool and tiled scheduling experiment
+- Queueing and concurrent submission beyond the single-call worker pool
 - Additional exact kernels beyond the current Gaussian and box pair
 - Interior-loop layout experiment before any optional explicit SIMD path
 - Optional CUDA implementation only with a reproducible GPU test environment

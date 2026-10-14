@@ -2,8 +2,11 @@
 
 #include <algorithm>
 #include <array>
+#include <condition_variable>
 #include <cstdint>
+#include <exception>
 #include <functional>
+#include <mutex>
 #include <stdexcept>
 #include <thread>
 #include <vector>
@@ -63,6 +66,125 @@ void blur_rows(const GrayImage& input, GrayImage& output, const KernelSpec& kern
 }
 
 }  // namespace
+
+struct BlurWorkerPool::Impl {
+  explicit Impl(std::size_t requested_workers) {
+    if (requested_workers == 0) throw std::invalid_argument("worker count must be positive");
+    if (requested_workers > kMaximumWorkerCount) {
+      throw std::invalid_argument("worker count exceeds the safety cap");
+    }
+    try {
+      workers.reserve(requested_workers);
+      for (std::size_t index = 0; index < requested_workers; ++index) {
+        workers.emplace_back([this, index] { worker_loop(index); });
+      }
+    } catch (...) {
+      {
+        std::lock_guard lock(state_mutex);
+        stopping = true;
+      }
+      work_ready.notify_all();
+      throw;
+    }
+  }
+
+  ~Impl() {
+    {
+      std::lock_guard lock(state_mutex);
+      stopping = true;
+    }
+    work_ready.notify_all();
+  }
+
+  GrayImage apply(const GrayImage& source, BlurKernel kernel) {
+    std::lock_guard operation_lock(operation_mutex);
+    GrayImage result(source.width(), source.height());
+    {
+      std::lock_guard state_lock(state_mutex);
+      input = &source;
+      output = &result;
+      spec = &kernel_spec(kernel);
+      active_workers = std::min(workers.size(), source.height());
+      completed_workers = 0;
+      worker_error = nullptr;
+      ++generation;
+    }
+    work_ready.notify_all();
+
+    std::unique_lock state_lock(state_mutex);
+    work_complete.wait(state_lock, [this] { return completed_workers == workers.size(); });
+    if (worker_error) std::rethrow_exception(worker_error);
+    return result;
+  }
+
+  void worker_loop(std::size_t index) {
+    std::size_t observed_generation = 0;
+    while (true) {
+      const GrayImage* source = nullptr;
+      GrayImage* result = nullptr;
+      const KernelSpec* selected_kernel = nullptr;
+      std::size_t begin_row = 0;
+      std::size_t end_row = 0;
+      bool has_rows = false;
+      {
+        std::unique_lock state_lock(state_mutex);
+        work_ready.wait(state_lock,
+                        [this, observed_generation] { return stopping || generation != observed_generation; });
+        if (stopping) return;
+        observed_generation = generation;
+        source = input;
+        result = output;
+        selected_kernel = spec;
+        has_rows = index < active_workers;
+        if (has_rows) {
+          const auto base_rows = source->height() / active_workers;
+          const auto extra_rows = source->height() % active_workers;
+          begin_row = index * base_rows + std::min(index, extra_rows);
+          end_row = begin_row + base_rows + (index < extra_rows ? 1U : 0U);
+        }
+      }
+
+      try {
+        if (has_rows) blur_rows(*source, *result, *selected_kernel, begin_row, end_row);
+      } catch (...) {
+        std::lock_guard state_lock(state_mutex);
+        if (!worker_error) worker_error = std::current_exception();
+      }
+
+      {
+        std::lock_guard state_lock(state_mutex);
+        ++completed_workers;
+        if (completed_workers == workers.size()) work_complete.notify_one();
+      }
+    }
+  }
+
+  std::mutex operation_mutex;
+  std::mutex state_mutex;
+  std::condition_variable work_ready;
+  std::condition_variable work_complete;
+  std::vector<std::jthread> workers;
+  const GrayImage* input = nullptr;
+  GrayImage* output = nullptr;
+  const KernelSpec* spec = nullptr;
+  std::exception_ptr worker_error;
+  std::size_t active_workers = 0;
+  std::size_t completed_workers = 0;
+  std::size_t generation = 0;
+  bool stopping = false;
+};
+
+BlurWorkerPool::BlurWorkerPool(std::size_t worker_count) : impl_(std::make_unique<Impl>(worker_count)) {}
+
+BlurWorkerPool::~BlurWorkerPool() = default;
+
+GrayImage BlurWorkerPool::blur(const GrayImage& input, BlurKernel kernel) {
+  return impl_->apply(input, kernel);
+}
+
+std::size_t BlurWorkerPool::worker_count() const noexcept {
+  return impl_->workers.size();
+}
 
 GrayImage blur_scalar(const GrayImage& input, BlurKernel kernel) {
   GrayImage output(input.width(), input.height());

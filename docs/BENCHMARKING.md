@@ -30,6 +30,26 @@ height so that every worker receives at least one row. This is an implementation
 count, not a measurement of simultaneous CPU utilization or operating-system
 scheduling.
 
+Pass `--reuse-workers` to construct a fixed worker pool before the untimed
+reference run and reuse it for every timed parallel iteration. Pool construction
+is intentionally outside the timed region; output allocation, dispatch,
+synchronization, and blur work remain inside it. The `workerLifecycle` field
+distinguishes `persistent` results from the default `per-invocation` model.
+This comparison measures repeated single-call dispatch only—the pool has no
+queue, overlapping submissions, work stealing, or production scheduler claim.
+
+### Verified worker-reuse comparison — 2026-10-14
+
+On the Apple M4 environment documented below, a nine-iteration 128×128 Gaussian
+run with four requested workers measured a 0.074 ms parallel median when threads
+were created per invocation and 0.038 ms with persistent workers. The reported
+speedup relative to each run's scalar median changed from 1.080× to 2.126×. Both
+paths matched exactly with checksum `ba5b426411b4759f`.
+
+This is a local sequential comparison showing that thread startup materially
+affects this small workload. It is not a throughput, concurrent-request, or
+cross-machine claim; repeat the experiment before quoting the values elsewhere.
+
 ## Workload crossover sweep
 
 Run the bounded default matrix and capture newline-delimited JSON:

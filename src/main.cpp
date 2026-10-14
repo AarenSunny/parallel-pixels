@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -26,6 +27,7 @@ struct BenchmarkOptions {
   std::size_t workers = parallel_pixels::default_worker_count();
   std::size_t iterations = 7;
   parallel_pixels::BlurKernel kernel = parallel_pixels::BlurKernel::gaussian;
+  bool reuse_workers = false;
   bool json = false;
 };
 
@@ -67,6 +69,7 @@ BenchmarkOptions benchmark_options(int argc, char** argv) {
     else if (argument == "--threads") options.workers = parse_positive(option_value(index, argc, argv), argument);
     else if (argument == "--iterations") options.iterations = parse_positive(option_value(index, argc, argv), argument);
     else if (argument == "--kernel") options.kernel = parse_kernel(option_value(index, argc, argv));
+    else if (argument == "--reuse-workers") options.reuse_workers = true;
     else if (argument == "--json") options.json = true;
     else throw std::invalid_argument("unknown benchmark option: " + std::string(argument));
   }
@@ -109,8 +112,14 @@ int run_benchmark(int argc, char** argv) {
   const auto options = benchmark_options(argc, argv);
   const auto input = synthetic_image(options.width, options.height);
   const auto active_workers = parallel_pixels::effective_worker_count(input, options.workers);
+  std::optional<parallel_pixels::BlurWorkerPool> worker_pool;
+  if (options.reuse_workers) worker_pool.emplace(options.workers);
+  auto run_parallel = [&] {
+    return worker_pool ? worker_pool->blur(input, options.kernel)
+                       : parallel_pixels::blur_parallel(input, options.kernel, options.workers);
+  };
   const auto scalar_reference = parallel_pixels::blur_scalar(input, options.kernel);
-  const auto parallel_reference = parallel_pixels::blur_parallel(input, options.kernel, options.workers);
+  const auto parallel_reference = run_parallel();
   if (scalar_reference != parallel_reference) throw std::runtime_error("parallel result differs from scalar reference");
 
   std::vector<double> scalar_samples;
@@ -127,7 +136,7 @@ int run_benchmark(int argc, char** argv) {
     };
     auto measure_parallel = [&] {
       const auto begin = Clock::now();
-      const auto result = parallel_pixels::blur_parallel(input, options.kernel, options.workers);
+      const auto result = run_parallel();
       const auto end = Clock::now();
       if (result != scalar_reference) throw std::runtime_error("parallel result differs from scalar reference");
       parallel_samples.push_back(elapsed_ms(begin, end));
@@ -154,6 +163,8 @@ int run_benchmark(int argc, char** argv) {
               << "  \"kernel\": \"" << kernel_name(options.kernel) << "\",\n"
               << "  \"threads\": " << options.workers << ",\n"
               << "  \"activeThreads\": " << active_workers << ",\n"
+              << "  \"workerLifecycle\": \""
+              << (options.reuse_workers ? "persistent" : "per-invocation") << "\",\n"
               << "  \"iterations\": " << options.iterations << ",\n"
               << "  \"scalarMedianMs\": " << scalar_median << ",\n"
               << "  \"scalarMadMs\": " << scalar_mad << ",\n"
@@ -171,6 +182,8 @@ int run_benchmark(int argc, char** argv) {
               << "Kernel: " << kernel_name(options.kernel) << "\n"
               << "Requested threads: " << options.workers << "\n"
               << "Active threads: " << active_workers << "\n"
+              << "Worker lifecycle: "
+              << (options.reuse_workers ? "persistent" : "per invocation") << "\n"
               << "Iterations: " << options.iterations << "\n"
               << "Scalar median: " << scalar_median << " ms\n"
               << "Scalar MAD: " << scalar_mad << " ms\n"
@@ -209,7 +222,7 @@ void usage(std::ostream& output) {
   output << "Usage:\n"
          << "  parallel-pixels blur <input.pgm> <output.pgm> [--threads N] [--kernel gaussian|box]\n"
          << "  parallel-pixels benchmark [--width N] [--height N] [--threads N] [--iterations N] "
-            "[--kernel gaussian|box] [--json]\n";
+            "[--kernel gaussian|box] [--reuse-workers] [--json]\n";
 }
 
 }  // namespace

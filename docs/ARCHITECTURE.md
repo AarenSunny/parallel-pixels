@@ -26,6 +26,12 @@ write the same output byte, so no mutex is required. `std::jthread` joins
 automatically on exceptional paths, and the normal path explicitly destroys
 the worker group before the output can be moved into the return value.
 
+The optional benchmark worker pool creates a fixed set of threads once and
+dispatches successive blur calls by generation. Every worker acknowledges each
+generation, including workers with no assigned rows, before the result returns.
+Calls are serialized intentionally: this experiment isolates per-call thread
+startup from steady-state dispatch without claiming a general task scheduler.
+
 ## Design decisions checked before implementation
 
 - **Role signal:** modern C++, memory layout, algorithms, thread partitioning,
@@ -40,9 +46,10 @@ the worker group before the output can be moved into the return value.
 
 ## Boundaries
 
-This is shared-memory CPU parallelism. Thread startup occurs for every call, so
-small images can be slower than scalar execution. It supports only fixed 3×3
-Gaussian and box kernels and does not use SIMD, thread-pool reuse, tiled caches,
+This is shared-memory CPU parallelism. The default path starts threads for every
+call; the optional fixed pool accepts only one blur at a time and has no queue,
+work stealing, cancellation, or concurrent submission. The project supports
+only fixed 3×3 Gaussian and box kernels and does not use SIMD, tiled caches,
 color formats, JPEG/PNG codecs, GPUs, or CUDA. Those are possible experiments
 only after preserving the scalar equivalence tests and recording
 hardware-specific measurements.
