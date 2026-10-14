@@ -59,20 +59,20 @@ Run the bounded default matrix and capture newline-delimited JSON:
 ```
 
 The sweep delegates every measurement to the same benchmark command rather
-than implementing a second timer. Its defaults cover both kernels, square
-images of 128, 512, and 2048 pixels, and one, two, four, and eight requested
-threads. Override the matrix without editing the script when a machine has
-different limits:
+than implementing a second timer. Its defaults cover per-invocation and
+persistent workers, both kernels, square images of 128, 512, and 2048 pixels,
+and one, two, four, and eight requested threads. Override the matrix without
+editing the script when a machine has different limits:
 
 ```bash
-KERNELS="box" SIZES="64 256 1024" THREADS="1 4" ITERATIONS=9 ./tools/crossover_sweep.sh
+WORKER_LIFECYCLES="persistent" KERNELS="box" SIZES="64 256 1024" THREADS="1 4" ITERATIONS=9 ./tools/crossover_sweep.sh
 ```
 
-Each line remains valid JSON and includes the kernel, dimensions, requested and
-active threads, exact-match evidence, and a checksum. Runs are sequential, so
-the output supports crossover analysis but does not isolate thermal throttling,
-background load, or CPU-frequency changes. Record the environment and repeat
-the full sweep before making a performance claim.
+Each line remains valid JSON and includes the worker lifecycle, kernel,
+dimensions, requested and active threads, exact-match evidence, and a checksum.
+Runs are sequential, so the output supports crossover analysis but does not
+isolate thermal throttling, background load, or CPU-frequency changes. Record
+the environment and repeat the full sweep before making a performance claim.
 
 ## Verified development run — 2026-10-04
 

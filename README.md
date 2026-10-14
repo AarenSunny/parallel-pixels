@@ -54,16 +54,16 @@ Add `--reuse-workers` to measure repeated calls through a fixed worker pool;
 the default remains thread creation per invocation so the original startup-cost
 experiment is preserved.
 
-To compare both kernels across workload sizes and thread counts with the same
-benchmark method:
+To compare both worker lifecycles and kernels across workload sizes and thread
+counts with the same benchmark method:
 
 ```bash
 ./tools/crossover_sweep.sh > crossover.ndjson
 ```
 
-The sweep emits one self-contained JSON object per kernel, size, and thread
-configuration, which keeps partial results usable if a long experiment is
-interrupted.
+The sweep emits one self-contained JSON object per lifecycle, kernel, size, and
+thread configuration, which keeps partial results usable if a long experiment
+is interrupted.
 
 ## Architecture
 
