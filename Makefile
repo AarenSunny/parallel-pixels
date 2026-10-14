@@ -9,7 +9,7 @@ APP_OBJECTS := $(LIB_OBJECTS) $(BUILD_DIR)/main.o
 TEST_OBJECTS := $(LIB_OBJECTS) $(BUILD_DIR)/test_main.o
 DEPENDENCIES := $(APP_OBJECTS:.o=.d) $(BUILD_DIR)/test_main.d
 
-.PHONY: all test benchmark-smoke crossover-smoke clean
+.PHONY: all test benchmark-smoke crossover-smoke vectorization-report clean
 
 all: $(BUILD_DIR)/parallel-pixels
 
@@ -21,6 +21,9 @@ benchmark-smoke: $(BUILD_DIR)/parallel-pixels
 
 crossover-smoke: $(BUILD_DIR)/parallel-pixels
 	KERNELS="gaussian box" SIZES="16" THREADS="1 2" ITERATIONS=1 ./tools/crossover_sweep.sh
+
+vectorization-report:
+	./tools/vectorization_report.sh
 
 $(BUILD_DIR)/parallel-pixels: $(APP_OBJECTS)
 	$(CXX) $(APP_OBJECTS) $(LDFLAGS) -o $@

@@ -20,6 +20,7 @@ Requirements: a C++20 compiler, POSIX threads, and Make.
 make test
 make benchmark-smoke
 make crossover-smoke
+make vectorization-report
 ```
 
 The eight test groups cover both fixed-point kernels, border behavior, constant
@@ -66,21 +67,22 @@ The image buffer is contiguous and row-major. The parallel path shares it
 read-only, balances rows across at most `min(requested_threads, image_height)`
 workers, and assigns exclusive output rows so synchronization is unnecessary.
 The [architecture review](docs/ARCHITECTURE.md) documents the decision gate,
-data flow, and limitations.
+data flow, and limitations. The [vectorization review](docs/VECTORIZATION.md)
+records the current compiler evidence before any SIMD experiment.
 
 ## Current boundaries
 
 - CPU shared-memory threads only; no CUDA or GPU claim
 - New threads per blur call rather than a reusable pool
 - Grayscale PGM only; no production image-codec dependency
-- Two fixed 3×3 kernels; no arbitrary kernels, SIMD, or cache tiling yet
+- Two fixed 3×3 kernels; no arbitrary kernels, explicit SIMD, or cache tiling yet
 - Local benchmark, not a cross-machine performance guarantee
 
 ## Roadmap
 
 - Reusable worker pool and tiled scheduling experiment
 - Additional exact kernels beyond the current Gaussian and box pair
-- Compiler-vectorization report and optional explicit SIMD path
+- Interior-loop layout experiment before any optional explicit SIMD path
 - Optional CUDA implementation only with a reproducible GPU test environment
 
 ## License
