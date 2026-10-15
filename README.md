@@ -86,7 +86,7 @@ records the current compiler evidence before any SIMD experiment.
 
 - Queueing and concurrent submission beyond the single-call worker pool
 - Additional exact kernels beyond the current Gaussian and box pair
-- Interior-loop layout experiment before any optional explicit SIMD path
+- Optional explicit SIMD only with a new measured layout hypothesis
 - Optional CUDA implementation only with a reproducible GPU test environment
 
 ## License

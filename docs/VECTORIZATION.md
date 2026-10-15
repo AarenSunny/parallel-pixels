@@ -19,11 +19,22 @@ and a value that could not be identified as a reduction. This is useful negative
 evidence: the current speedups come from row-level threading, not a claimed SIMD
 path.
 
-The narrow next experiment would separate border handling from the interior
-loop and expose contiguous spans to the compiler, then compare correctness,
-diagnostics, and measured timings against this baseline. An explicit SIMD
-implementation is not justified until that simpler layout experiment produces
-repeatable evidence.
+## Rejected interior-loop experiment — 2026-10-14
+
+A trial separated clamped border pixels from a contiguous interior loop using
+raw row-major spans. Apple Clang then reported that the interior loop was
+vectorized at width 16, and all nine correctness groups remained exact.
+
+An A/B run compiled the committed and experimental `blur.cpp` with the same
+Apple Clang 21.0.0 flags and linked both against the same remaining objects. On
+a 2048×2048 Gaussian workload with nine iterations, the committed scalar path
+measured 20.185 ms versus 20.188 ms for the experiment. At eight workers, the
+parallel medians were 3.722 ms and 3.735 ms respectively. Both produced checksum
+`9d2346a9be271ae0`.
+
+Those sub-percent differences do not establish an improvement, so the more
+complex layout was not retained. A future explicit SIMD path needs a different
+hypothesis and repeatable runtime evidence, not only a positive compiler remark.
 
 ## Boundaries
 
