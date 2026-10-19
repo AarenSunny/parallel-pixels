@@ -101,6 +101,13 @@ void test_worker_pool_reuses_threads_across_calls() {
   }
 }
 
+void test_worker_pool_shutdown_without_work() {
+  for (std::size_t iteration = 0; iteration < 64; ++iteration) {
+    parallel_pixels::BlurWorkerPool pool(4);
+    expect(pool.worker_count() == 4, "worker pool did not finish starting before shutdown");
+  }
+}
+
 void test_benchmark_statistics() {
   expect(parallel_pixels::median({9.0, 1.0, 5.0}) == 5.0, "odd-sample median was incorrect");
   expect(parallel_pixels::median({1.0, 2.0, 9.0, 10.0}) == 5.5,
@@ -153,6 +160,7 @@ int main() {
       {"parallel output matches scalar output", test_parallel_matches_scalar_across_shapes_and_workers},
       {"effective worker count respects image height", test_effective_worker_count_respects_image_height},
       {"worker pool reuses threads across calls", test_worker_pool_reuses_threads_across_calls},
+      {"worker pool shuts down without work", test_worker_pool_shutdown_without_work},
       {"benchmark statistics are robust", test_benchmark_statistics},
       {"PGM round trip preserves bytes", test_pgm_round_trip},
       {"invalid inputs are rejected", test_invalid_inputs_are_rejected},

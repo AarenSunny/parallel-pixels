@@ -31,6 +31,9 @@ dispatches successive blur calls by generation. Every worker acknowledges each
 generation, including workers with no assigned rows, before the result returns.
 Calls are serialized intentionally: this experiment isolates per-call thread
 startup from steady-state dispatch without claiming a general task scheduler.
+Shutdown sets the shared stop flag and explicitly joins every worker before
+the counters, pointers, and flag they observe can be destroyed; the same rule
+applies if thread creation fails partway through pool construction.
 
 ## Design decisions checked before implementation
 

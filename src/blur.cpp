@@ -84,6 +84,9 @@ struct BlurWorkerPool::Impl {
         stopping = true;
       }
       work_ready.notify_all();
+      // Join any threads created before construction failed while the shared
+      // state they observe is still alive.
+      workers.clear();
       throw;
     }
   }
@@ -94,6 +97,10 @@ struct BlurWorkerPool::Impl {
       stopping = true;
     }
     work_ready.notify_all();
+    // The synchronization state is declared after workers and would otherwise
+    // be destroyed first. Join here, in the destructor body, so no worker can
+    // observe partially destroyed state.
+    workers.clear();
   }
 
   GrayImage apply(const GrayImage& source, BlurKernel kernel) {

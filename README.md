@@ -23,11 +23,11 @@ make crossover-smoke
 make vectorization-report
 ```
 
-The nine test groups cover both fixed-point kernels, border behavior, constant
+The ten test groups cover both fixed-point kernels, border behavior, constant
 images, exact parallel/scalar equality across shapes and thread counts, PGM
-round trips, effective worker limits, benchmark statistics, and invalid input
-handling. The smoke targets verify both a single benchmark and the crossover
-sweep.
+round trips, effective worker limits, worker-pool lifecycle, benchmark
+statistics, and invalid input handling. The smoke targets verify both a single
+benchmark and the crossover sweep.
 
 ## Process an image
 
