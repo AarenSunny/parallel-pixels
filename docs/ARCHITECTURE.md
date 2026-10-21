@@ -19,6 +19,12 @@ non-overflowing dimensions. Both implementations apply the selected integer
 3×3 Gaussian or box kernel with clamped borders, so equality is byte-for-byte
 rather than an image-quality tolerance.
 
+The PGM reader parses the header directly from the input stream, allocates the
+validated image once, and reads exactly the expected raster bytes into that
+buffer. It rejects truncated or trailing data, so binary pixel values are never
+mistaken for header whitespace or comments and the file is not duplicated in
+memory before processing.
+
 The parallel path rejects requests above a 256-thread safety cap, limits active
 workers to image height, divides rows as evenly as possible, and gives each
 worker an exclusive output range. Workers share the read-only input but never

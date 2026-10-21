@@ -126,6 +126,27 @@ void test_pgm_round_trip() {
   std::filesystem::remove(path);
 }
 
+void test_pgm_streams_exact_raster_bytes() {
+  const auto path = std::filesystem::temp_directory_path() / "parallel-pixels-streaming.pgm";
+  {
+    std::ofstream output(path, std::ios::binary | std::ios::trunc);
+    output << "P5\n# dimensions follow\n2 1\n255\r\n";
+    output.put('#');
+    output.put('\n');
+  }
+  const auto image = parallel_pixels::read_pgm(path);
+  expect(image == GrayImage(2, 1, {'#', '\n'}),
+         "PGM parser did not preserve binary bytes after a commented CRLF header");
+
+  {
+    std::ofstream output(path, std::ios::binary | std::ios::app);
+    output.put('x');
+  }
+  expect_throws([&] { static_cast<void>(parallel_pixels::read_pgm(path)); },
+                "PGM raster with trailing bytes was accepted");
+  std::filesystem::remove(path);
+}
+
 void test_invalid_inputs_are_rejected() {
   expect_throws([] { static_cast<void>(GrayImage(0, 1)); }, "zero-width image was accepted");
   expect_throws([] {
@@ -147,6 +168,13 @@ void test_invalid_inputs_are_rejected() {
   }
   expect_throws([&] { static_cast<void>(parallel_pixels::read_pgm(path)); },
                 "truncated PGM raster was accepted");
+
+  {
+    std::ofstream output(path, std::ios::binary | std::ios::trunc);
+    output << "P5\n+2 2\n255\nabcd";
+  }
+  expect_throws([&] { static_cast<void>(parallel_pixels::read_pgm(path)); },
+                "signed PGM dimension was accepted");
   std::filesystem::remove(path);
 }
 
@@ -163,6 +191,7 @@ int main() {
       {"worker pool shuts down without work", test_worker_pool_shutdown_without_work},
       {"benchmark statistics are robust", test_benchmark_statistics},
       {"PGM round trip preserves bytes", test_pgm_round_trip},
+      {"PGM parser streams exact raster bytes", test_pgm_streams_exact_raster_bytes},
       {"invalid inputs are rejected", test_invalid_inputs_are_rejected},
   };
   std::size_t passed = 0;

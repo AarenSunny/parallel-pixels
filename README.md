@@ -23,11 +23,11 @@ make crossover-smoke
 make vectorization-report
 ```
 
-The ten test groups cover both fixed-point kernels, border behavior, constant
+The eleven test groups cover both fixed-point kernels, border behavior, constant
 images, exact parallel/scalar equality across shapes and thread counts, PGM
-round trips, effective worker limits, worker-pool lifecycle, benchmark
-statistics, and invalid input handling. The smoke targets verify both a single
-benchmark and the crossover sweep.
+round trips and raster boundaries, effective worker limits, worker-pool
+lifecycle, benchmark statistics, and invalid input handling. The smoke targets
+verify both a single benchmark and the crossover sweep.
 
 ## Process an image
 
@@ -36,8 +36,10 @@ make
 ./build/parallel-pixels blur input.pgm output.pgm --threads 8 --kernel box
 ```
 
-Only binary P5 PGM input with an 8-bit maximum value is accepted. Dimensions,
-raster length, and output failures are validated rather than silently repaired.
+Only binary P5 PGM input with an 8-bit maximum value is accepted. The parser
+streams the raster into its validated image buffer rather than duplicating the
+whole file in memory. Dimensions, exact raster length, and output failures are
+validated rather than silently repaired.
 
 ## Measure parallel speedup
 
