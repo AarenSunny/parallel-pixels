@@ -13,6 +13,9 @@ an untimed scalar and parallel result first, and refuses to benchmark if they
 differ. Timed scalar and parallel calls alternate order. The report uses the
 median rather than the fastest sample, reports median absolute deviation (MAD)
 for timing variability, and includes an exact-match flag and output checksum.
+Machine-readable reports also retain both raw timing arrays at six decimal
+places, so the summary statistics can be recomputed and sub-microsecond samples
+do not round down to a misleading zero.
 
 MAD is the median distance from the sample median. It is resistant to a single
 timing outlier and makes unstable runs visible, but it is not a confidence
@@ -70,9 +73,10 @@ WORKER_LIFECYCLES="persistent" KERNELS="box" SIZES="64 256 1024" THREADS="1 4" I
 
 Each line remains valid JSON and includes the worker lifecycle, kernel,
 dimensions, requested and active threads, exact-match evidence, and a checksum.
-Runs are sequential, so the output supports crossover analysis but does not
-isolate thermal throttling, background load, or CPU-frequency changes. Record
-the environment and repeat the full sweep before making a performance claim.
+The raw sample arrays make each median and MAD auditable. Runs are sequential,
+so the output supports crossover analysis but does not isolate thermal
+throttling, background load, or CPU-frequency changes. Record the environment
+and repeat the full sweep before making a performance claim.
 
 ## Verified development run — 2026-10-04
 

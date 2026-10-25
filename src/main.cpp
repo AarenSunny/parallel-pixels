@@ -99,6 +99,15 @@ double elapsed_ms(Clock::time_point begin, Clock::time_point end) {
   return std::chrono::duration<double, std::milli>(end - begin).count();
 }
 
+void write_json_samples(const std::vector<double>& samples) {
+  std::cout << '[';
+  for (std::size_t index = 0; index < samples.size(); ++index) {
+    if (index > 0) std::cout << ", ";
+    std::cout << samples[index];
+  }
+  std::cout << ']';
+}
+
 std::uint64_t checksum(const GrayImage& image) {
   std::uint64_t hash = 1469598103934665603ULL;
   for (const auto pixel : image.pixels()) {
@@ -156,7 +165,7 @@ int run_benchmark(int argc, char** argv) {
   const auto parallel_mad = parallel_pixels::median_absolute_deviation(parallel_samples);
   const auto speedup = scalar_median / parallel_median;
   if (options.json) {
-    std::cout << std::fixed << std::setprecision(3)
+    std::cout << std::fixed << std::setprecision(6)
               << "{\n"
               << "  \"width\": " << options.width << ",\n"
               << "  \"height\": " << options.height << ",\n"
@@ -166,6 +175,11 @@ int run_benchmark(int argc, char** argv) {
               << "  \"workerLifecycle\": \""
               << (options.reuse_workers ? "persistent" : "per-invocation") << "\",\n"
               << "  \"iterations\": " << options.iterations << ",\n"
+              << "  \"scalarSamplesMs\": ";
+    write_json_samples(scalar_samples);
+    std::cout << ",\n  \"parallelSamplesMs\": ";
+    write_json_samples(parallel_samples);
+    std::cout << ",\n"
               << "  \"scalarMedianMs\": " << scalar_median << ",\n"
               << "  \"scalarMadMs\": " << scalar_mad << ",\n"
               << "  \"parallelMedianMs\": " << parallel_median << ",\n"
