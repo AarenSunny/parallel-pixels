@@ -17,8 +17,7 @@ test: $(BUILD_DIR)/parallel-pixels-tests
 	./$(BUILD_DIR)/parallel-pixels-tests
 
 benchmark-smoke: $(BUILD_DIR)/parallel-pixels
-	./$(BUILD_DIR)/parallel-pixels benchmark --width 128 --height 128 --threads 4 --iterations 3 --json
-	./$(BUILD_DIR)/parallel-pixels benchmark --width 128 --height 128 --threads 4 --iterations 3 --reuse-workers --json
+	python3 ./tools/benchmark_smoke.py ./$(BUILD_DIR)/parallel-pixels
 
 crossover-smoke: $(BUILD_DIR)/parallel-pixels
 	WORKER_LIFECYCLES="per-invocation persistent" KERNELS="gaussian box" SIZES="16" THREADS="2" ITERATIONS=1 ./tools/crossover_sweep.sh

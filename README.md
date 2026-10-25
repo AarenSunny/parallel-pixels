@@ -14,7 +14,8 @@ without claiming CUDA or hardware-design experience.
 
 ## Build and test
 
-Requirements: a C++20 compiler, POSIX threads, and Make.
+Requirements: a C++20 compiler, POSIX threads, Make, and Python 3 for the
+machine-readable benchmark smoke check.
 
 ```bash
 make test
@@ -27,7 +28,8 @@ The eleven test groups cover both fixed-point kernels, border behavior, constant
 images, exact parallel/scalar equality across shapes and thread counts, PGM
 round trips and raster boundaries, effective worker limits, worker-pool
 lifecycle, benchmark statistics, and invalid input handling. The smoke targets
-verify both a single benchmark and the crossover sweep.
+verify both worker lifecycles, validate their machine-readable timing evidence,
+and exercise the crossover sweep.
 
 ## Process an image
 
