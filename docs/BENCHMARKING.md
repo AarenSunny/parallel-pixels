@@ -21,11 +21,20 @@ MAD is the median distance from the sample median. It is resistant to a single
 timing outlier and makes unstable runs visible, but it is not a confidence
 interval and does not make results portable across machines.
 
-Always record CPU model, operating system, compiler, optimization flags, image
-dimensions, kernel, requested thread count, and iteration count beside a result. A
-speedup from one machine is not a general throughput promise. The implementation
-creates threads per invocation, so it intentionally exposes startup overhead
-and may lose on small inputs.
+Capture a machine-readable environment sidecar before a benchmark run:
+
+```bash
+make benchmark-environment > environment.json
+```
+
+The report records a best-effort CPU model (falling back to the processor or
+architecture name), operating system, architecture, logical CPU count,
+compiler, build flags, Git revision, and whether the working tree is clean.
+Benchmark JSON separately records the dimensions, kernel, requested thread
+count, and iteration count. Review the sidecar before sharing because build
+flags can contain local paths. A speedup from one machine is not a general
+throughput promise. The implementation creates threads per invocation, so it
+intentionally exposes startup overhead and may lose on small inputs.
 
 The JSON `threads` field records the requested count, while `activeThreads`
 records the number actually launched. Active threads are capped at the image

@@ -20,6 +20,7 @@ machine-readable benchmark smoke check.
 ```bash
 make test
 make benchmark-smoke
+make benchmark-environment
 make crossover-smoke
 make vectorization-report
 ```
@@ -30,6 +31,11 @@ round trips and raster boundaries, effective worker limits, worker-pool
 lifecycle, benchmark statistics, and invalid input handling. The smoke targets
 verify both worker lifecycles, validate their machine-readable timing evidence,
 and exercise the crossover sweep.
+
+`make benchmark-environment` emits a JSON sidecar with the operating system,
+best-effort CPU model, compiler, build flags, logical CPU count, Git revision,
+and working-tree state. Save it beside benchmark output instead of treating
+measurements as portable across machines.
 
 ## Process an image
 

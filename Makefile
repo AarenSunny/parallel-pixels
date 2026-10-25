@@ -9,7 +9,7 @@ APP_OBJECTS := $(LIB_OBJECTS) $(BUILD_DIR)/main.o
 TEST_OBJECTS := $(LIB_OBJECTS) $(BUILD_DIR)/test_main.o
 DEPENDENCIES := $(APP_OBJECTS:.o=.d) $(BUILD_DIR)/test_main.d
 
-.PHONY: all test benchmark-smoke crossover-smoke vectorization-report clean
+.PHONY: all test benchmark-smoke benchmark-environment crossover-smoke vectorization-report clean
 
 all: $(BUILD_DIR)/parallel-pixels
 
@@ -18,6 +18,9 @@ test: $(BUILD_DIR)/parallel-pixels-tests
 
 benchmark-smoke: $(BUILD_DIR)/parallel-pixels
 	python3 ./tools/benchmark_smoke.py ./$(BUILD_DIR)/parallel-pixels
+
+benchmark-environment:
+	@python3 ./tools/environment_report.py --compiler="$(CXX)" --cppflags="$(CPPFLAGS)" --cxxflags="$(CXXFLAGS)" --ldflags="$(LDFLAGS)"
 
 crossover-smoke: $(BUILD_DIR)/parallel-pixels
 	WORKER_LIFECYCLES="per-invocation persistent" KERNELS="gaussian box" SIZES="16" THREADS="2" ITERATIONS=1 ./tools/crossover_sweep.sh
