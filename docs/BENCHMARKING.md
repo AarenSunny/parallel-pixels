@@ -24,7 +24,8 @@ interval and does not make results portable across machines.
 Capture a machine-readable environment sidecar before a benchmark run:
 
 ```bash
-make benchmark-environment > environment.json
+mkdir -p benchmark-artifacts
+make benchmark-environment > benchmark-artifacts/environment.json
 ```
 
 The report records a best-effort CPU model (falling back to the processor or
@@ -35,6 +36,8 @@ count, and iteration count. Review the sidecar before sharing because build
 flags can contain local paths. A speedup from one machine is not a general
 throughput promise. The implementation creates threads per invocation, so it
 intentionally exposes startup overhead and may lose on small inputs.
+The output directory is ignored by Git, preventing the redirected sidecar from
+changing the `workingTreeClean` value it is trying to record.
 
 The JSON `threads` field records the requested count, while `activeThreads`
 records the number actually launched. Active threads are capped at the image
@@ -67,7 +70,7 @@ cross-machine claim; repeat the experiment before quoting the values elsewhere.
 Run the bounded default matrix and capture newline-delimited JSON:
 
 ```bash
-./tools/crossover_sweep.sh > crossover.ndjson
+./tools/crossover_sweep.sh > benchmark-artifacts/crossover.ndjson
 ```
 
 The sweep delegates every measurement to the same benchmark command rather

@@ -68,12 +68,15 @@ To compare both worker lifecycles and kernels across workload sizes and thread
 counts with the same benchmark method:
 
 ```bash
-./tools/crossover_sweep.sh > crossover.ndjson
+mkdir -p benchmark-artifacts
+make benchmark-environment > benchmark-artifacts/environment.json
+./tools/crossover_sweep.sh > benchmark-artifacts/crossover.ndjson
 ```
 
 The sweep emits one self-contained JSON object per lifecycle, kernel, size, and
 thread configuration, which keeps partial results usable if a long experiment
-is interrupted.
+is interrupted. Generated evidence lives in an ignored directory so redirecting
+the environment sidecar does not make its own tree-state field dirty.
 
 ## Architecture
 
