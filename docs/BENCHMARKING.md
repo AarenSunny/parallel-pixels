@@ -14,8 +14,9 @@ differ. Timed scalar and parallel calls alternate order. The report uses the
 median rather than the fastest sample, reports median absolute deviation (MAD)
 for timing variability, and includes an exact-match flag and output checksum.
 Machine-readable reports also retain both raw timing arrays at six decimal
-places, so the summary statistics can be recomputed and sub-microsecond samples
-do not round down to a misleading zero.
+places so the summary statistics can be recomputed. A workload that produces a
+non-positive clock sample is rejected instead of emitting a meaningless zero
+duration or speedup; increase the image dimensions and repeat the run.
 
 MAD is the median distance from the sample median. It is resistant to a single
 timing outlier and makes unstable runs visible, but it is not a confidence

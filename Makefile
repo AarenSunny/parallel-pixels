@@ -23,7 +23,7 @@ benchmark-environment:
 	@python3 ./tools/environment_report.py --compiler="$(CXX)" --cppflags="$(CPPFLAGS)" --cxxflags="$(CXXFLAGS)" --ldflags="$(LDFLAGS)"
 
 crossover-smoke: $(BUILD_DIR)/parallel-pixels
-	WORKER_LIFECYCLES="per-invocation persistent" KERNELS="gaussian box" SIZES="16" THREADS="2" ITERATIONS=1 ./tools/crossover_sweep.sh
+	WORKER_LIFECYCLES="per-invocation persistent" KERNELS="gaussian box" SIZES="128" THREADS="2" ITERATIONS=1 ./tools/crossover_sweep.sh
 
 vectorization-report:
 	./tools/vectorization_report.sh

@@ -108,6 +108,15 @@ void write_json_samples(const std::vector<double>& samples) {
   std::cout << ']';
 }
 
+void require_measurable_samples(const std::vector<double>& samples, std::string_view label) {
+  for (const auto sample : samples) {
+    if (sample <= 0.0) {
+      throw std::runtime_error(std::string(label) +
+                               " benchmark sample was below timer resolution; increase image dimensions");
+    }
+  }
+}
+
 std::uint64_t checksum(const GrayImage& image) {
   std::uint64_t hash = 1469598103934665603ULL;
   for (const auto pixel : image.pixels()) {
@@ -159,6 +168,8 @@ int run_benchmark(int argc, char** argv) {
     }
   }
 
+  require_measurable_samples(scalar_samples, "scalar");
+  require_measurable_samples(parallel_samples, "parallel");
   const auto scalar_median = parallel_pixels::median(scalar_samples);
   const auto parallel_median = parallel_pixels::median(parallel_samples);
   const auto scalar_mad = parallel_pixels::median_absolute_deviation(scalar_samples);
