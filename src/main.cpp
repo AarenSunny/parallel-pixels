@@ -99,6 +99,11 @@ double elapsed_ms(Clock::time_point begin, Clock::time_point end) {
   return std::chrono::duration<double, std::milli>(end - begin).count();
 }
 
+double megapixels_per_second(std::size_t width, std::size_t height, double elapsed_ms) {
+  const auto output_pixels = static_cast<double>(width) * static_cast<double>(height);
+  return output_pixels / (elapsed_ms * 1'000.0);
+}
+
 void write_json_samples(const std::vector<double>& samples) {
   std::cout << '[';
   for (std::size_t index = 0; index < samples.size(); ++index) {
@@ -175,6 +180,10 @@ int run_benchmark(int argc, char** argv) {
   const auto scalar_mad = parallel_pixels::median_absolute_deviation(scalar_samples);
   const auto parallel_mad = parallel_pixels::median_absolute_deviation(parallel_samples);
   const auto speedup = scalar_median / parallel_median;
+  const auto scalar_throughput =
+      megapixels_per_second(options.width, options.height, scalar_median);
+  const auto parallel_throughput =
+      megapixels_per_second(options.width, options.height, parallel_median);
   if (options.json) {
     std::cout << std::fixed << std::setprecision(6)
               << "{\n"
@@ -195,6 +204,8 @@ int run_benchmark(int argc, char** argv) {
               << "  \"scalarMadMs\": " << scalar_mad << ",\n"
               << "  \"parallelMedianMs\": " << parallel_median << ",\n"
               << "  \"parallelMadMs\": " << parallel_mad << ",\n"
+              << "  \"scalarMegapixelsPerSecond\": " << scalar_throughput << ",\n"
+              << "  \"parallelMegapixelsPerSecond\": " << parallel_throughput << ",\n"
               << "  \"speedup\": " << speedup << ",\n"
               << "  \"exactMatch\": true,\n"
               << "  \"outputChecksum\": \"" << std::hex << checksum(scalar_reference) << std::dec << "\",\n"
@@ -214,6 +225,8 @@ int run_benchmark(int argc, char** argv) {
               << "Scalar MAD: " << scalar_mad << " ms\n"
               << "Parallel median: " << parallel_median << " ms\n"
               << "Parallel MAD: " << parallel_mad << " ms\n"
+              << "Scalar throughput: " << scalar_throughput << " MP/s\n"
+              << "Parallel throughput: " << parallel_throughput << " MP/s\n"
               << "Speedup: " << speedup << "x\n"
               << "Exact match: yes\n";
   }

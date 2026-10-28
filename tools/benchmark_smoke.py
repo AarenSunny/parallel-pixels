@@ -61,8 +61,23 @@ def validate_report(report: dict, lifecycle: str) -> None:
         ):
             fail(f"{prefix}MadMs does not match the raw samples")
 
-    if require_number(report, "speedup") <= 0:
+        reported_throughput = require_number(report, f"{prefix}MegapixelsPerSecond")
+        expected_throughput = (
+            expected["width"] * expected["height"] / (reported_median * 1_000.0)
+        )
+        if reported_throughput <= 0 or not math.isclose(
+            reported_throughput, expected_throughput, rel_tol=2e-5, abs_tol=1e-6
+        ):
+            fail(f"{prefix}MegapixelsPerSecond does not match the reported median")
+
+    speedup = require_number(report, "speedup")
+    if speedup <= 0:
         fail("speedup is not positive")
+    throughput_speedup = require_number(report, "parallelMegapixelsPerSecond") / require_number(
+        report, "scalarMegapixelsPerSecond"
+    )
+    if not math.isclose(speedup, throughput_speedup, rel_tol=2e-5, abs_tol=1e-6):
+        fail("speedup does not match the throughput ratio")
     checksum = report.get("outputChecksum")
     if not isinstance(checksum, str) or re.fullmatch(r"[0-9a-f]+", checksum) is None:
         fail("outputChecksum is not a lowercase hexadecimal string")

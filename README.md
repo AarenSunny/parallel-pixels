@@ -57,8 +57,9 @@ validated rather than silently repaired.
 
 The benchmark uses deterministic input, alternates scalar/parallel timing order,
 reports medians and median absolute deviations, validates exact equality, and
-includes a stable checksum. Read the [benchmark method](docs/BENCHMARKING.md)
-before quoting a result.
+includes a stable checksum. It also derives decimal megapixels per second from
+each path's median for same-environment, same-kernel workload comparisons. Read
+the [benchmark method](docs/BENCHMARKING.md) before quoting a result.
 
 Add `--reuse-workers` to measure repeated calls through a fixed worker pool;
 the default remains thread creation per invocation so the original startup-cost

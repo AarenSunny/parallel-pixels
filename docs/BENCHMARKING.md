@@ -14,13 +14,23 @@ differ. Timed scalar and parallel calls alternate order. The report uses the
 median rather than the fastest sample, reports median absolute deviation (MAD)
 for timing variability, and includes an exact-match flag and output checksum.
 Machine-readable reports also retain both raw timing arrays at six decimal
-places so the summary statistics can be recomputed. A workload that produces a
-non-positive clock sample is rejected instead of emitting a meaningless zero
-duration or speedup; increase the image dimensions and repeat the run.
+places so the summary statistics can be recomputed. Scalar and parallel
+throughput are reported in decimal megapixels per second (one million output
+pixels per second), derived from the image dimensions and each path's median.
+A workload that produces a non-positive clock sample is rejected instead of
+emitting a meaningless zero duration, throughput, or speedup; increase the
+image dimensions and repeat the run.
 
 MAD is the median distance from the sample median. It is resistant to a single
 timing outlier and makes unstable runs visible, but it is not a confidence
 interval and does not make results portable across machines.
+
+Throughput normalizes results across image sizes for the same kernel and
+environment. It counts output pixels, not convolution operations, memory
+traffic, simultaneous requests, or useful work completed by other systems.
+Compare kernels separately and pair every throughput result with its
+environment sidecar; the field does not make measurements cross-machine
+comparable.
 
 Capture a machine-readable environment sidecar before a benchmark run:
 
