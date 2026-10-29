@@ -21,6 +21,8 @@ class BlurWorkerPool {
   BlurWorkerPool(BlurWorkerPool&&) = delete;
   BlurWorkerPool& operator=(BlurWorkerPool&&) = delete;
 
+  // Concurrent callers are safe, but each blur runs to completion before the
+  // next caller dispatches work to the shared worker set.
   [[nodiscard]] GrayImage blur(const GrayImage& input, BlurKernel kernel);
   [[nodiscard]] std::size_t worker_count() const noexcept;
 

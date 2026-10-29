@@ -1,9 +1,11 @@
 #include <algorithm>
 #include <array>
+#include <barrier>
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <future>
 #include <functional>
 #include <iostream>
 #include <stdexcept>
@@ -108,6 +110,38 @@ void test_worker_pool_shutdown_without_work() {
   }
 }
 
+void test_worker_pool_serializes_concurrent_callers() {
+  parallel_pixels::BlurWorkerPool pool(4);
+  GrayImage first_input(47, 31);
+  GrayImage second_input(53, 29);
+  for (std::size_t index = 0; index < first_input.pixels().size(); ++index) {
+    first_input.pixels()[index] = static_cast<std::uint8_t>((index * 17U + 41U) % 256U);
+  }
+  for (std::size_t index = 0; index < second_input.pixels().size(); ++index) {
+    second_input.pixels()[index] = static_cast<std::uint8_t>((index * 23U + 67U) % 256U);
+  }
+  const auto first_expected =
+      parallel_pixels::blur_scalar(first_input, parallel_pixels::BlurKernel::gaussian);
+  const auto second_expected =
+      parallel_pixels::blur_scalar(second_input, parallel_pixels::BlurKernel::box);
+  std::barrier start(3);
+  auto run = [&start, &pool](const GrayImage& input, parallel_pixels::BlurKernel kernel,
+                             const GrayImage& expected) {
+    start.arrive_and_wait();
+    for (std::size_t iteration = 0; iteration < 16; ++iteration) {
+      expect(pool.blur(input, kernel) == expected,
+             "shared worker pool produced an incorrect concurrent-call result");
+    }
+  };
+  auto first = std::async(std::launch::async, run, std::cref(first_input),
+                          parallel_pixels::BlurKernel::gaussian, std::cref(first_expected));
+  auto second = std::async(std::launch::async, run, std::cref(second_input),
+                           parallel_pixels::BlurKernel::box, std::cref(second_expected));
+  start.arrive_and_wait();
+  first.get();
+  second.get();
+}
+
 void test_benchmark_statistics() {
   expect(parallel_pixels::median({9.0, 1.0, 5.0}) == 5.0, "odd-sample median was incorrect");
   expect(parallel_pixels::median({1.0, 2.0, 9.0, 10.0}) == 5.5,
@@ -189,6 +223,7 @@ int main() {
       {"effective worker count respects image height", test_effective_worker_count_respects_image_height},
       {"worker pool reuses threads across calls", test_worker_pool_reuses_threads_across_calls},
       {"worker pool shuts down without work", test_worker_pool_shutdown_without_work},
+      {"worker pool serializes concurrent callers", test_worker_pool_serializes_concurrent_callers},
       {"benchmark statistics are robust", test_benchmark_statistics},
       {"PGM round trip preserves bytes", test_pgm_round_trip},
       {"PGM parser streams exact raster bytes", test_pgm_streams_exact_raster_bytes},
