@@ -25,12 +25,12 @@ make crossover-smoke
 make vectorization-report
 ```
 
-The eleven test groups cover both fixed-point kernels, border behavior, constant
+The test suite covers both fixed-point kernels, border behavior, constant
 images, exact parallel/scalar equality across shapes and thread counts, PGM
-round trips and raster boundaries, effective worker limits, worker-pool
-lifecycle, benchmark statistics, and invalid input handling. The smoke targets
-verify both worker lifecycles, validate their machine-readable timing evidence,
-and exercise the crossover sweep.
+round trips and raster boundaries, effective worker limits, worker-pool reuse,
+concurrent callers and shutdown, benchmark statistics, and invalid input
+handling. The smoke targets verify both worker lifecycles, validate their
+machine-readable timing evidence, and exercise the crossover sweep.
 
 `make benchmark-environment` emits a JSON sidecar with the operating system,
 best-effort CPU model, compiler, build flags, logical CPU count, Git revision,
