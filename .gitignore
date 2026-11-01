@@ -1,4 +1,5 @@
 /build/
+/build-*/
 /benchmark-artifacts/
 .DS_Store
 *.pgm

@@ -19,6 +19,7 @@ machine-readable benchmark smoke check.
 
 ```bash
 make test
+make thread-sanitizer
 make benchmark-smoke
 make benchmark-environment
 make crossover-smoke
@@ -31,6 +32,10 @@ round trips and raster boundaries, effective worker limits, worker-pool reuse,
 concurrent callers and shutdown, benchmark statistics, and invalid input
 handling. The smoke targets verify both worker lifecycles, validate their
 machine-readable timing evidence, and exercise the crossover sweep.
+`make thread-sanitizer` performs a clean, isolated instrumented build and runs
+the same suite through a compatible compiler's ThreadSanitizer. It covers the
+executed concurrency paths but is dynamic evidence, not a proof that every
+possible schedule is race-free.
 
 `make benchmark-environment` emits a JSON sidecar with the operating system,
 best-effort CPU model, compiler, build flags, logical CPU count, Git revision,

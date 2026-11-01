@@ -44,6 +44,12 @@ and explicitly joins every worker before the counters, pointers, and flag they
 observe can be destroyed; the same rule applies if thread creation fails
 partway through pool construction.
 
+The ordinary suite also runs under ThreadSanitizer in a separate clean build.
+That instruments the worker lifecycle, shared-pool callers, dispatch counters,
+and shutdown paths exercised by the tests. A clean run is useful concurrency
+debugging evidence, but it covers observed executions rather than proving that
+all schedules are race-free.
+
 ## Design decisions checked before implementation
 
 - **Role signal:** modern C++, memory layout, algorithms, thread partitioning,

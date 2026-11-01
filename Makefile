@@ -2,6 +2,8 @@ CXX ?= c++
 CPPFLAGS := -Iinclude
 CXXFLAGS ?= -std=c++20 -O3 -Wall -Wextra -Wpedantic -Werror -pthread
 LDFLAGS ?= -pthread
+TSAN_CXXFLAGS ?= -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -pthread -fsanitize=thread -fno-omit-frame-pointer
+TSAN_LDFLAGS ?= -pthread -fsanitize=thread
 
 BUILD_DIR := build
 LIB_OBJECTS := $(BUILD_DIR)/blur.o $(BUILD_DIR)/pgm.o $(BUILD_DIR)/statistics.o
@@ -9,12 +11,16 @@ APP_OBJECTS := $(LIB_OBJECTS) $(BUILD_DIR)/main.o
 TEST_OBJECTS := $(LIB_OBJECTS) $(BUILD_DIR)/test_main.o
 DEPENDENCIES := $(APP_OBJECTS:.o=.d) $(BUILD_DIR)/test_main.d
 
-.PHONY: all test benchmark-smoke benchmark-environment crossover-smoke vectorization-report clean
+.PHONY: all test thread-sanitizer benchmark-smoke benchmark-environment crossover-smoke vectorization-report clean
 
 all: $(BUILD_DIR)/parallel-pixels
 
 test: $(BUILD_DIR)/parallel-pixels-tests
 	./$(BUILD_DIR)/parallel-pixels-tests
+
+thread-sanitizer:
+	$(MAKE) BUILD_DIR=build-tsan clean
+	$(MAKE) BUILD_DIR=build-tsan CXX="$(CXX)" CXXFLAGS="$(TSAN_CXXFLAGS)" LDFLAGS="$(TSAN_LDFLAGS)" test
 
 benchmark-smoke: $(BUILD_DIR)/parallel-pixels
 	python3 ./tools/benchmark_smoke.py ./$(BUILD_DIR)/parallel-pixels
