@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <numeric>
 #include <stdexcept>
 #include <vector>
 
@@ -9,10 +10,15 @@ namespace parallel_pixels {
 
 double median(const std::vector<double>& samples) {
   if (samples.empty()) throw std::invalid_argument("median requires at least one sample");
+  if (!std::all_of(samples.begin(), samples.end(),
+                   [](const double sample) { return std::isfinite(sample); })) {
+    throw std::invalid_argument("median samples must be finite");
+  }
   auto sorted = samples;
   std::sort(sorted.begin(), sorted.end());
   const auto middle = sorted.size() / 2;
-  return sorted.size() % 2 == 0 ? (sorted[middle - 1] + sorted[middle]) / 2.0 : sorted[middle];
+  return sorted.size() % 2 == 0 ? std::midpoint(sorted[middle - 1], sorted[middle])
+                               : sorted[middle];
 }
 
 double median_absolute_deviation(const std::vector<double>& samples) {

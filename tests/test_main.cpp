@@ -8,6 +8,7 @@
 #include <future>
 #include <functional>
 #include <iostream>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -148,8 +149,25 @@ void test_benchmark_statistics() {
          "even-sample median was incorrect");
   expect(parallel_pixels::median_absolute_deviation({1.0, 2.0, 2.0, 4.0, 6.0}) == 1.0,
          "median absolute deviation was incorrect");
+  const auto maximum = std::numeric_limits<double>::max();
+  expect(parallel_pixels::median({maximum, maximum}) == maximum,
+         "even-sample median overflowed for large finite values");
+  expect(parallel_pixels::median({-maximum, maximum}) == 0.0,
+         "even-sample median overflowed across the finite range");
   expect_throws([] { static_cast<void>(parallel_pixels::median({})); },
                 "empty timing sample set was accepted");
+  expect_throws(
+      [] {
+        static_cast<void>(parallel_pixels::median(
+            {1.0, std::numeric_limits<double>::infinity()}));
+      },
+      "infinite timing sample was accepted");
+  expect_throws(
+      [] {
+        static_cast<void>(parallel_pixels::median(
+            {std::numeric_limits<double>::quiet_NaN(), 1.0}));
+      },
+      "NaN timing sample was accepted");
 }
 
 void test_pgm_round_trip() {

@@ -17,6 +17,9 @@ Machine-readable reports also retain both raw timing arrays at six decimal
 places so the summary statistics can be recomputed. Scalar and parallel
 throughput are reported in decimal megapixels per second (one million output
 pixels per second), derived from the image dimensions and each path's median.
+A summary rejects non-finite samples, and even-sized medians use an
+overflow-safe midpoint so finite measurements cannot become infinite during
+aggregation.
 A workload that produces a non-positive clock sample is rejected instead of
 emitting a meaningless zero duration, throughput, or speedup; increase the
 image dimensions and repeat the run.
