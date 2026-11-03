@@ -9,8 +9,10 @@
 #include <functional>
 #include <iostream>
 #include <limits>
+#include <span>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -22,6 +24,11 @@
 namespace {
 
 using parallel_pixels::GrayImage;
+
+static_assert(std::is_same_v<decltype(std::declval<GrayImage&>().pixels()),
+                             std::span<std::uint8_t>>);
+static_assert(std::is_same_v<decltype(std::declval<const GrayImage&>().pixels()),
+                             std::span<const std::uint8_t>>);
 
 void expect(bool condition, const std::string& message) {
   if (!condition) throw std::runtime_error(message);

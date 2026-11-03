@@ -15,9 +15,12 @@ flowchart LR
 ```
 
 `GrayImage` owns one contiguous row-major byte buffer and validates positive,
-non-overflowing dimensions. Both implementations apply the selected integer
-3×3 Gaussian or box kernel with clamped borders, so equality is byte-for-byte
-rather than an image-quality tolerance.
+non-overflowing dimensions. Pixel access uses fixed-size `std::span` views, so
+callers can update bytes without resizing the backing allocation and breaking
+the dimension-to-storage invariant. The views are non-owning and do not add
+lifetime or concurrent-mutation safety. Both implementations apply the selected
+integer 3×3 Gaussian or box kernel with clamped borders, so equality is
+byte-for-byte rather than an image-quality tolerance.
 
 The PGM reader parses the header directly from the input stream, allocates the
 validated image once, and reads exactly the expected raster bytes into that

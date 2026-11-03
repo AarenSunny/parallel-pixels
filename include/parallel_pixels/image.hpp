@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <span>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -23,8 +24,8 @@ class GrayImage {
 
   [[nodiscard]] std::size_t width() const noexcept { return width_; }
   [[nodiscard]] std::size_t height() const noexcept { return height_; }
-  [[nodiscard]] const std::vector<std::uint8_t>& pixels() const noexcept { return pixels_; }
-  [[nodiscard]] std::vector<std::uint8_t>& pixels() noexcept { return pixels_; }
+  [[nodiscard]] std::span<const std::uint8_t> pixels() const noexcept { return pixels_; }
+  [[nodiscard]] std::span<std::uint8_t> pixels() noexcept { return pixels_; }
 
   [[nodiscard]] std::uint8_t at(std::size_t x, std::size_t y) const {
     if (x >= width_ || y >= height_) throw std::out_of_range("pixel coordinate is outside the image");
