@@ -38,6 +38,9 @@ the worker group before the output can be moved into the return value.
 The optional benchmark worker pool creates a fixed set of threads once and
 dispatches successive blur calls by generation. Every worker acknowledges each
 generation, including workers with no assigned rows, before the result returns.
+The benchmark sizes that pool to the image's effective row count, matching the
+per-invocation path and avoiding idle persistent threads when more workers are
+requested than rows.
 Calls are serialized intentionally: this experiment isolates per-call thread
 startup from steady-state dispatch without claiming a general task scheduler.
 A two-caller regression test starts distinct kernels and image shapes together,

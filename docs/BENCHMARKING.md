@@ -53,11 +53,12 @@ intentionally exposes startup overhead and may lose on small inputs.
 The output directory is ignored by Git, preventing the redirected sidecar from
 changing the `workingTreeClean` value it is trying to record.
 
-The JSON `threads` field records the requested count, while `activeThreads`
-records the number actually launched. Active threads are capped at the image
-height so that every worker receives at least one row. This is an implementation
-count, not a measurement of simultaneous CPU utilization or operating-system
-scheduling.
+The JSON `threads` field records the requested count, `activeThreads` records
+the number of nonempty row partitions, and `workerThreads` records the threads
+actually created. Both worker lifecycles cap created threads at image height,
+so a short image does not leave a larger persistent pool idle or skew the
+lifecycle comparison. These are implementation counts, not measurements of
+simultaneous CPU utilization or operating-system scheduling.
 
 Pass `--reuse-workers` to construct a fixed worker pool before the untimed
 reference run and reuse it for every timed parallel iteration. Pool construction

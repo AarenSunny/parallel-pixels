@@ -35,6 +35,7 @@ def validate_report(report: dict, lifecycle: str) -> None:
         "kernel": "gaussian",
         "threads": 4,
         "activeThreads": 4,
+        "workerThreads": 4,
         "workerLifecycle": lifecycle,
         "iterations": 3,
         "exactMatch": True,
@@ -106,6 +107,36 @@ def run(binary: str, reuse_workers: bool) -> None:
     print(f"PASS benchmark JSON contract ({lifecycle})")
 
 
+def validate_short_image_worker_cap(binary: str) -> None:
+    completed = subprocess.run(
+        [
+            binary,
+            "benchmark",
+            "--width",
+            "4096",
+            "--height",
+            "2",
+            "--threads",
+            "4",
+            "--iterations",
+            "1",
+            "--reuse-workers",
+            "--json",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    report = json.loads(completed.stdout)
+    if report.get("threads") != 4:
+        fail("short-image report lost the requested thread count")
+    if report.get("activeThreads") != 2 or report.get("workerThreads") != 2:
+        fail("persistent benchmark created workers without row partitions")
+    if report.get("exactMatch") is not True:
+        fail("short-image worker-cap result did not match the scalar reference")
+    print("PASS benchmark worker accounting (persistent short image)")
+
+
 def main() -> int:
     if len(sys.argv) != 2:
         print(f"usage: {sys.argv[0]} <parallel-pixels-binary>", file=sys.stderr)
@@ -113,6 +144,7 @@ def main() -> int:
     try:
         run(sys.argv[1], reuse_workers=False)
         run(sys.argv[1], reuse_workers=True)
+        validate_short_image_worker_cap(sys.argv[1])
     except (json.JSONDecodeError, OSError, RuntimeError, subprocess.CalledProcessError) as error:
         print(f"FAIL benchmark JSON contract: {error}", file=sys.stderr)
         return 1

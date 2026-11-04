@@ -136,7 +136,8 @@ int run_benchmark(int argc, char** argv) {
   const auto input = synthetic_image(options.width, options.height);
   const auto active_workers = parallel_pixels::effective_worker_count(input, options.workers);
   std::optional<parallel_pixels::BlurWorkerPool> worker_pool;
-  if (options.reuse_workers) worker_pool.emplace(options.workers);
+  if (options.reuse_workers) worker_pool.emplace(active_workers);
+  const auto worker_threads = worker_pool ? worker_pool->worker_count() : active_workers;
   auto run_parallel = [&] {
     return worker_pool ? worker_pool->blur(input, options.kernel)
                        : parallel_pixels::blur_parallel(input, options.kernel, options.workers);
@@ -192,6 +193,7 @@ int run_benchmark(int argc, char** argv) {
               << "  \"kernel\": \"" << kernel_name(options.kernel) << "\",\n"
               << "  \"threads\": " << options.workers << ",\n"
               << "  \"activeThreads\": " << active_workers << ",\n"
+              << "  \"workerThreads\": " << worker_threads << ",\n"
               << "  \"workerLifecycle\": \""
               << (options.reuse_workers ? "persistent" : "per-invocation") << "\",\n"
               << "  \"iterations\": " << options.iterations << ",\n"
@@ -218,6 +220,7 @@ int run_benchmark(int argc, char** argv) {
               << "Kernel: " << kernel_name(options.kernel) << "\n"
               << "Requested threads: " << options.workers << "\n"
               << "Active threads: " << active_workers << "\n"
+              << "Worker threads: " << worker_threads << "\n"
               << "Worker lifecycle: "
               << (options.reuse_workers ? "persistent" : "per invocation") << "\n"
               << "Iterations: " << options.iterations << "\n"
