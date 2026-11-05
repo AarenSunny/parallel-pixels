@@ -90,9 +90,9 @@ Run the bounded default matrix and capture newline-delimited JSON:
 
 The sweep delegates every measurement to the same benchmark command rather
 than implementing a second timer. Its defaults cover per-invocation and
-persistent workers, both kernels, square images of 128, 512, and 2048 pixels,
-and one, two, four, and eight requested threads. Override the matrix without
-editing the script when a machine has different limits:
+persistent workers, all three kernels, square images of 128, 512, and 2048
+pixels, and one, two, four, and eight requested threads. Override the matrix
+without editing the script when a machine has different limits:
 
 ```bash
 WORKER_LIFECYCLES="persistent" KERNELS="box" SIZES="64 256 1024" THREADS="1 4" ITERATIONS=9 ./tools/crossover_sweep.sh

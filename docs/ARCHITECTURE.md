@@ -19,8 +19,9 @@ non-overflowing dimensions. Pixel access uses fixed-size `std::span` views, so
 callers can update bytes without resizing the backing allocation and breaking
 the dimension-to-storage invariant. The views are non-owning and do not add
 lifetime or concurrent-mutation safety. Both implementations apply the selected
-integer 3×3 Gaussian or box kernel with clamped borders, so equality is
-byte-for-byte rather than an image-quality tolerance.
+integer 3×3 Gaussian, box, or sharpen kernel with clamped borders. Signed
+sharpen results saturate to the 8-bit range, so equality is byte-for-byte
+rather than an image-quality tolerance.
 
 The PGM reader parses the header directly from the input stream, allocates the
 validated image once, and reads exactly the expected raster bytes into that
@@ -73,7 +74,7 @@ all schedules are race-free.
 This is shared-memory CPU parallelism. The default path starts threads for every
 call; the optional fixed pool accepts only one blur at a time and has no queue,
 work stealing, cancellation, or concurrent submission. The project supports
-only fixed 3×3 Gaussian and box kernels and does not use SIMD, tiled caches,
-color formats, JPEG/PNG codecs, GPUs, or CUDA. Those are possible experiments
-only after preserving the scalar equivalence tests and recording
+only fixed 3×3 Gaussian, box, and sharpen kernels and does not use SIMD, tiled
+caches, color formats, JPEG/PNG codecs, GPUs, or CUDA. Those are possible
+experiments only after preserving the scalar equivalence tests and recording
 hardware-specific measurements.

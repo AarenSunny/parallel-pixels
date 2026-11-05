@@ -9,7 +9,7 @@ namespace parallel_pixels {
 
 inline constexpr std::size_t kMaximumWorkerCount = 256;
 
-enum class BlurKernel { gaussian, box };
+enum class BlurKernel { gaussian, box, sharpen };
 
 class BlurWorkerPool {
  public:

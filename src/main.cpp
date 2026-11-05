@@ -34,11 +34,20 @@ struct BenchmarkOptions {
 parallel_pixels::BlurKernel parse_kernel(std::string_view value) {
   if (value == "gaussian") return parallel_pixels::BlurKernel::gaussian;
   if (value == "box") return parallel_pixels::BlurKernel::box;
-  throw std::invalid_argument("kernel must be 'gaussian' or 'box'");
+  if (value == "sharpen") return parallel_pixels::BlurKernel::sharpen;
+  throw std::invalid_argument("kernel must be 'gaussian', 'box', or 'sharpen'");
 }
 
 std::string_view kernel_name(parallel_pixels::BlurKernel kernel) {
-  return kernel == parallel_pixels::BlurKernel::gaussian ? "gaussian" : "box";
+  switch (kernel) {
+    case parallel_pixels::BlurKernel::gaussian:
+      return "gaussian";
+    case parallel_pixels::BlurKernel::box:
+      return "box";
+    case parallel_pixels::BlurKernel::sharpen:
+      return "sharpen";
+  }
+  throw std::invalid_argument("unknown blur kernel");
 }
 
 std::size_t parse_positive(std::string_view value, std::string_view option) {
@@ -261,9 +270,10 @@ int run_blur(int argc, char** argv) {
 
 void usage(std::ostream& output) {
   output << "Usage:\n"
-         << "  parallel-pixels blur <input.pgm> <output.pgm> [--threads N] [--kernel gaussian|box]\n"
+         << "  parallel-pixels blur <input.pgm> <output.pgm> [--threads N] "
+            "[--kernel gaussian|box|sharpen]\n"
          << "  parallel-pixels benchmark [--width N] [--height N] [--threads N] [--iterations N] "
-            "[--kernel gaussian|box] [--reuse-workers] [--json]\n";
+            "[--kernel gaussian|box|sharpen] [--reuse-workers] [--json]\n";
 }
 
 }  // namespace

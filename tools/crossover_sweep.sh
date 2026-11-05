@@ -5,7 +5,7 @@ set -euo pipefail
 binary=${BINARY:-./build/parallel-pixels}
 sizes=${SIZES:-"128 512 2048"}
 worker_counts=${THREADS:-"1 2 4 8"}
-kernels=${KERNELS:-"gaussian box"}
+kernels=${KERNELS:-"gaussian box sharpen"}
 worker_lifecycles=${WORKER_LIFECYCLES:-"per-invocation persistent"}
 iterations=${ITERATIONS:-7}
 

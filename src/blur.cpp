@@ -15,8 +15,8 @@ namespace parallel_pixels {
 namespace {
 
 struct KernelSpec {
-  std::array<std::array<unsigned, 3>, 3> weights;
-  unsigned divisor;
+  std::array<std::array<int, 3>, 3> weights;
+  int divisor;
 };
 
 constexpr KernelSpec kGaussianKernel{
@@ -27,6 +27,10 @@ constexpr KernelSpec kBoxKernel{
     .weights = {{{1, 1, 1}, {1, 1, 1}, {1, 1, 1}}},
     .divisor = 9,
 };
+constexpr KernelSpec kSharpenKernel{
+    .weights = {{{0, -1, 0}, {-1, 5, -1}, {0, -1, 0}}},
+    .divisor = 1,
+};
 
 const KernelSpec& kernel_spec(BlurKernel kernel) {
   switch (kernel) {
@@ -34,6 +38,8 @@ const KernelSpec& kernel_spec(BlurKernel kernel) {
       return kGaussianKernel;
     case BlurKernel::box:
       return kBoxKernel;
+    case BlurKernel::sharpen:
+      return kSharpenKernel;
   }
   throw std::invalid_argument("unknown blur kernel");
 }
@@ -50,7 +56,7 @@ void blur_rows(const GrayImage& input, GrayImage& output, const KernelSpec& kern
                std::size_t begin_row, std::size_t end_row) {
   for (std::size_t y = begin_row; y < end_row; ++y) {
     for (std::size_t x = 0; x < input.width(); ++x) {
-      unsigned weighted_sum = 0;
+      int weighted_sum = 0;
       for (int kernel_y = -1; kernel_y <= 1; ++kernel_y) {
         const auto source_y = clamped_offset(y, kernel_y, input.height());
         for (int kernel_x = -1; kernel_x <= 1; ++kernel_x) {
@@ -60,7 +66,8 @@ void blur_rows(const GrayImage& input, GrayImage& output, const KernelSpec& kern
           weighted_sum += weight * input.at(source_x, source_y);
         }
       }
-      output.at(x, y) = static_cast<std::uint8_t>(weighted_sum / kernel.divisor);
+      output.at(x, y) = static_cast<std::uint8_t>(
+          std::clamp(weighted_sum / kernel.divisor, 0, 255));
     }
   }
 }

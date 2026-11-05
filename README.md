@@ -4,9 +4,9 @@
 
 Parallel Pixels is a dependency-free C++20 image-processing lab built to make
 parallel-software decisions measurable. It reads binary grayscale PGM images,
-runs exact integer 3×3 Gaussian or box blur through either a scalar reference
-or a row-partitioned multithreaded implementation, and verifies byte-for-byte
-equivalence before reporting speedup.
+runs exact integer 3×3 Gaussian blur, box blur, or sharpening through either a
+scalar reference or a row-partitioned multithreaded implementation, and
+verifies byte-for-byte equivalence before reporting speedup.
 
 This is deliberately a software project. It demonstrates algorithms, memory
 layout, validation, concurrency, profiling discipline, and technical honesty
@@ -26,12 +26,13 @@ make crossover-smoke
 make vectorization-report
 ```
 
-The test suite covers both fixed-point kernels, border behavior, constant
-images, exact parallel/scalar equality across shapes and thread counts, PGM
-round trips and raster boundaries, effective worker limits, worker-pool reuse,
-concurrent callers and shutdown, benchmark statistics, and invalid input
-handling. The smoke targets verify both worker lifecycles, validate their
-machine-readable timing evidence, and exercise the crossover sweep.
+The test suite covers all three fixed-point kernels, signed-output saturation,
+border behavior, constant images, exact parallel/scalar equality across shapes
+and thread counts, PGM round trips and raster boundaries, effective worker
+limits, worker-pool reuse, concurrent callers and shutdown, benchmark
+statistics, and invalid input handling. The smoke targets verify both worker
+lifecycles, validate their machine-readable timing evidence, and exercise the
+crossover sweep.
 `make thread-sanitizer` performs a clean, isolated instrumented build and runs
 the same suite through a compatible compiler's ThreadSanitizer. It covers the
 executed concurrency paths but is dynamic evidence, not a proof that every
@@ -49,7 +50,8 @@ make
 ./build/parallel-pixels blur input.pgm output.pgm --threads 8 --kernel box
 ```
 
-Only binary P5 PGM input with an 8-bit maximum value is accepted. The parser
+Only binary P5 PGM input with an 8-bit maximum value is accepted. Select
+`--kernel gaussian`, `--kernel box`, or `--kernel sharpen`. The parser
 streams the raster into its validated image buffer rather than duplicating the
 whole file in memory. Dimensions, exact raster length, and output failures are
 validated rather than silently repaired.
@@ -70,8 +72,8 @@ Add `--reuse-workers` to measure repeated calls through a fixed worker pool;
 the default remains thread creation per invocation so the original startup-cost
 experiment is preserved.
 
-To compare both worker lifecycles and kernels across workload sizes and thread
-counts with the same benchmark method:
+To compare both worker lifecycles and all kernels across workload sizes and
+thread counts with the same benchmark method:
 
 ```bash
 mkdir -p benchmark-artifacts
@@ -98,13 +100,13 @@ records the current compiler evidence before any SIMD experiment.
 - CPU shared-memory threads only; no CUDA or GPU claim
 - Reusable pool is benchmark-only and accepts one blur call at a time
 - Grayscale PGM only; no production image-codec dependency
-- Two fixed 3×3 kernels; no arbitrary kernels, explicit SIMD, or cache tiling yet
+- Three fixed 3×3 kernels; no arbitrary kernels, explicit SIMD, or cache tiling yet
 - Local benchmark, not a cross-machine performance guarantee
 
 ## Roadmap
 
 - Queueing and concurrent submission beyond the single-call worker pool
-- Additional exact kernels beyond the current Gaussian and box pair
+- Additional exact kernels only when they exercise a distinct numeric boundary
 - Optional explicit SIMD only with a new measured layout hypothesis
 - Optional CUDA implementation only with a reproducible GPU test environment
 
