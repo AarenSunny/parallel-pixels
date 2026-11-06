@@ -29,6 +29,8 @@ static_assert(std::is_same_v<decltype(std::declval<GrayImage&>().pixels()),
                              std::span<std::uint8_t>>);
 static_assert(std::is_same_v<decltype(std::declval<const GrayImage&>().pixels()),
                              std::span<const std::uint8_t>>);
+static_assert(std::is_nothrow_move_constructible_v<GrayImage>);
+static_assert(std::is_nothrow_move_assignable_v<GrayImage>);
 
 void expect(bool condition, const std::string& message) {
   if (!condition) throw std::runtime_error(message);
@@ -204,6 +206,36 @@ void test_pgm_round_trip() {
   std::filesystem::remove(path);
 }
 
+void test_image_moves_preserve_storage_invariants() {
+  const GrayImage expected(2, 2, {1, 2, 3, 4});
+  GrayImage source = expected;
+  GrayImage constructed(std::move(source));
+  expect(constructed == expected, "move construction changed image contents");
+  expect(source.width() == 0 && source.height() == 0 && source.pixels().empty(),
+         "move construction left stale dimensions on the source image");
+  expect_throws([&] { static_cast<void>(source.at(0, 0)); },
+                "moved-from image exposed missing pixel storage");
+
+  GrayImage assigned(1, 1, {9});
+  assigned = std::move(constructed);
+  expect(assigned == expected, "move assignment changed image contents");
+  expect(constructed.width() == 0 && constructed.height() == 0 && constructed.pixels().empty(),
+         "move assignment left stale dimensions on the source image");
+
+  const auto path = std::filesystem::temp_directory_path() / "parallel-pixels-empty-move.pgm";
+  std::filesystem::remove(path);
+  bool rejected = false;
+  try {
+    parallel_pixels::write_pgm(path, constructed);
+  } catch (const std::exception&) {
+    rejected = true;
+  }
+  const auto created_output = std::filesystem::exists(path);
+  std::filesystem::remove(path);
+  expect(rejected, "moved-from image was accepted as a PGM output");
+  expect(!created_output, "rejected moved-from image created an output file");
+}
+
 void test_pgm_streams_exact_raster_bytes() {
   const auto path = std::filesystem::temp_directory_path() / "parallel-pixels-streaming.pgm";
   {
@@ -271,6 +303,7 @@ int main() {
       {"worker pool serializes concurrent callers", test_worker_pool_serializes_concurrent_callers},
       {"benchmark statistics are robust", test_benchmark_statistics},
       {"PGM round trip preserves bytes", test_pgm_round_trip},
+      {"image moves preserve storage invariants", test_image_moves_preserve_storage_invariants},
       {"PGM parser streams exact raster bytes", test_pgm_streams_exact_raster_bytes},
       {"invalid inputs are rejected", test_invalid_inputs_are_rejected},
   };

@@ -22,6 +22,26 @@ class GrayImage {
     }
   }
 
+  GrayImage(const GrayImage&) = default;
+  GrayImage& operator=(const GrayImage&) = default;
+
+  GrayImage(GrayImage&& other) noexcept
+      : width_(std::exchange(other.width_, 0)),
+        height_(std::exchange(other.height_, 0)),
+        pixels_(std::move(other.pixels_)) {
+    other.pixels_.clear();
+  }
+
+  GrayImage& operator=(GrayImage&& other) noexcept {
+    if (this != &other) {
+      pixels_ = std::move(other.pixels_);
+      width_ = std::exchange(other.width_, 0);
+      height_ = std::exchange(other.height_, 0);
+      other.pixels_.clear();
+    }
+    return *this;
+  }
+
   [[nodiscard]] std::size_t width() const noexcept { return width_; }
   [[nodiscard]] std::size_t height() const noexcept { return height_; }
   [[nodiscard]] std::span<const std::uint8_t> pixels() const noexcept { return pixels_; }

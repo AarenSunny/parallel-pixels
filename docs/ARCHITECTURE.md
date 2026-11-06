@@ -17,11 +17,14 @@ flowchart LR
 `GrayImage` owns one contiguous row-major byte buffer and validates positive,
 non-overflowing dimensions. Pixel access uses fixed-size `std::span` views, so
 callers can update bytes without resizing the backing allocation and breaking
-the dimension-to-storage invariant. The views are non-owning and do not add
-lifetime or concurrent-mutation safety. Both implementations apply the selected
-integer 3×3 Gaussian, box, or sharpen kernel with clamped borders. Signed
-sharpen results saturate to the 8-bit range, so equality is byte-for-byte
-rather than an image-quality tolerance.
+the dimension-to-storage invariant. Explicit move operations transfer the
+dimensions and storage together, then leave the source in a defined empty
+state; coordinate access and PGM export reject that internal state, while
+ordinary construction still requires positive dimensions. The views are
+non-owning and do not add lifetime or concurrent-mutation safety. Both
+implementations apply the selected integer 3×3 Gaussian, box, or sharpen kernel
+with clamped borders. Signed sharpen results saturate to the 8-bit range, so
+equality is byte-for-byte rather than an image-quality tolerance.
 
 The PGM reader parses the header directly from the input stream, allocates the
 validated image once, and reads exactly the expected raster bytes into that

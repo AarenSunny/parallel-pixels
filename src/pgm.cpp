@@ -118,6 +118,9 @@ GrayImage read_pgm(const std::filesystem::path& path) {
 }
 
 void write_pgm(const std::filesystem::path& path, const GrayImage& image) {
+  if (image.width() == 0 || image.height() == 0) {
+    throw std::runtime_error("cannot write an empty PGM image");
+  }
   if (image.pixels().size() >
       static_cast<std::size_t>(std::numeric_limits<std::streamsize>::max())) {
     throw std::runtime_error("PGM raster is too large to write");

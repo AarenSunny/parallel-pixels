@@ -30,9 +30,9 @@ The test suite covers all three fixed-point kernels, signed-output saturation,
 border behavior, constant images, exact parallel/scalar equality across shapes
 and thread counts, PGM round trips and raster boundaries, effective worker
 limits, worker-pool reuse, concurrent callers and shutdown, benchmark
-statistics, and invalid input handling. The smoke targets verify both worker
-lifecycles, validate their machine-readable timing evidence, and exercise the
-crossover sweep.
+statistics, image move-state invariants, and invalid input handling. The smoke
+targets verify both worker lifecycles, validate their machine-readable timing
+evidence, and exercise the crossover sweep.
 `make thread-sanitizer` performs a clean, isolated instrumented build and runs
 the same suite through a compatible compiler's ThreadSanitizer. It covers the
 executed concurrency paths but is dynamic evidence, not a proof that every
