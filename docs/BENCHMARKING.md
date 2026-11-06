@@ -20,6 +20,9 @@ pixels per second), derived from the image dimensions and each path's median.
 A summary rejects non-finite samples, and even-sized medians use an
 overflow-safe midpoint so finite measurements cannot become infinite during
 aggregation.
+Median absolute deviation also keeps an unrepresentable individual distance
+ordered as a tail value, so a finite extreme outlier cannot invalidate the
+finite robust center.
 A workload that produces a non-positive clock sample is rejected instead of
 emitting a meaningless zero duration, throughput, or speedup; increase the
 image dimensions and repeat the run.

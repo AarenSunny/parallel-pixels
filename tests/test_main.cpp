@@ -176,6 +176,10 @@ void test_benchmark_statistics() {
          "even-sample median overflowed for large finite values");
   expect(parallel_pixels::median({-maximum, maximum}) == 0.0,
          "even-sample median overflowed across the finite range");
+  expect(parallel_pixels::median_absolute_deviation({-maximum, maximum, maximum}) == 0.0,
+         "odd-sample median absolute deviation rejected a finite extreme outlier");
+  expect(parallel_pixels::median_absolute_deviation({-maximum, 1.0, 2.0, 3.0}) == 1.0,
+         "even-sample median absolute deviation rejected a finite extreme outlier");
   expect_throws([] { static_cast<void>(parallel_pixels::median({})); },
                 "empty timing sample set was accepted");
   expect_throws(
